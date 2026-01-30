@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
-import { approveRequest, fetchApproval, rejectRequest, ApprovalItem } from '../api/approval.api';
+import { approveRequest, fetchApproval, rejectRequest, ApprovalItem, completeBarangMasuk } from '../api/approval.api';
 
 const fallbackRows: ApprovalItem[] = [
   {
@@ -146,6 +147,14 @@ const Approval = () => {
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ApprovalItem | null>(null);
+  const [completeFormData, setCompleteFormData] = useState({
+    itemCode: '',
+    location: '',
+  });
+  const [completeLoading, setCompleteLoading] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   const loadData = () => {
     setLoading(true);
@@ -171,14 +180,54 @@ const Approval = () => {
     return () => clearTimeout(timer);
   }, [statusMessage]);
 
-  const handleApprove = (id: number) => {
-    approveRequest(id)
-      .then(() => {
-        setStatusMessage('Permintaan disetujui');
-        setError(null);
-        loadData();
-      })
-      .catch(() => setError('Gagal menyetujui (server)'));
+  const handleApprove = async (item: ApprovalItem) => {
+    try {
+      // Step 1: Approve request first
+      const approvedItem = await approveRequest(item.id);
+      
+      // Step 2: On success, open modal to complete barang masuk with updated item
+      setSelectedItem(approvedItem);
+      setCompleteFormData({
+        itemCode: approvedItem.code || '',
+        location: '',
+      });
+      setCompleteError(null);
+      setShowCompleteModal(true);
+      
+      // Step 3: Reload data to refresh table with approved status
+      loadData();
+    } catch (err: any) {
+      setStatusMessage(err.message || 'Gagal menyetujui permintaan');
+    }
+  };
+
+  const handleCompleteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedItem || !completeFormData.itemCode || !completeFormData.location) {
+      setCompleteError('Kode barang dan lokasi tidak boleh kosong');
+      return;
+    }
+
+    setCompleteLoading(true);
+    setCompleteError(null);
+    try {
+      await completeBarangMasuk({
+        approval_id: selectedItem.id,
+        kode_barang: completeFormData.itemCode,
+        lokasi_simpan: completeFormData.location,
+        qty: selectedItem.qty,
+        satuan: selectedItem.unit,
+        tanggal: selectedItem.date,
+      });
+      setStatusMessage('Barang masuk berhasil dicatat');
+      setShowCompleteModal(false);
+      setSelectedItem(null);
+      loadData();
+    } catch (err: any) {
+      setCompleteError(err.message || 'Gagal mencatat barang masuk');
+    } finally {
+      setCompleteLoading(false);
+    }
   };
 
   const handleReject = (id: number) => {
@@ -235,7 +284,7 @@ const Approval = () => {
                     <div className="action-buttons">
                       {row.status === 'pending' ? (
                         <>
-                          <Button type="button" variant="secondary" size="sm" onClick={() => handleApprove(row.id)}>
+                          <Button type="button" variant="secondary" size="sm" onClick={() => handleApprove(row)}>
                             <CheckIcon /> Setujui
                           </Button>
                           <Button type="button" variant="danger" size="sm" onClick={() => handleReject(row.id)}>
@@ -253,6 +302,78 @@ const Approval = () => {
           </TBody>
         </Table>
       </div>
+
+      {/* Complete Barang Masuk Modal */}
+      {showCompleteModal && selectedItem && (
+        <div className="modal-overlay" onClick={() => setShowCompleteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">Lengkapi Data Barang Masuk</h2>
+            {completeError && <p className="danger-text">{completeError}</p>}
+            <form onSubmit={handleCompleteSubmit} className="edit-form">
+              <div className="form-group">
+                <label htmlFor="item-name">Nama Barang</label>
+                <Input
+                  id="item-name"
+                  type="text"
+                  value={selectedItem.name}
+                  disabled
+                  placeholder="Nama barang"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="item-code">Kode Barang *</label>
+                <Input
+                  id="item-code"
+                  type="text"
+                  value={completeFormData.itemCode}
+                  onChange={(e) => setCompleteFormData({ ...completeFormData, itemCode: e.target.value })}
+                  placeholder="Kode barang"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="item-location">Lokasi Simpan *</label>
+                <Input
+                  id="item-location"
+                  type="text"
+                  value={completeFormData.location}
+                  onChange={(e) => setCompleteFormData({ ...completeFormData, location: e.target.value })}
+                  placeholder="Lokasi simpan"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="item-qty">Jumlah</label>
+                <Input
+                  id="item-qty"
+                  type="number"
+                  value={selectedItem.qty}
+                  disabled
+                  placeholder="Jumlah"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="item-unit">Satuan</label>
+                <Input
+                  id="item-unit"
+                  type="text"
+                  value={selectedItem.unit}
+                  disabled
+                  placeholder="Satuan"
+                />
+              </div>
+              <div className="form-actions">
+                <Button type="submit" disabled={completeLoading}>
+                  {completeLoading ? 'Menyimpan...' : 'Selesai & Catat Barang Masuk'}
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => setShowCompleteModal(false)}>
+                  Batal
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

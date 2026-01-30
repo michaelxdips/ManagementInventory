@@ -1,7 +1,8 @@
 const { listApprovals, setStatus, findById } = require('../models/approvals.model');
 const { updateStatus } = require('../models/requests.model');
-const { getItemByName, getItemByLooseName } = require('../models/atkItem.model');
+const { getItemByName, getItemByLooseName, insertItem } = require('../models/atkItem.model');
 const { insertBarangKeluar, kurangiStok } = require('../models/barangKeluar.model');
+const { insertBarangMasuk, tambahStok } = require('../models/barangMasuk.model');
 const db = require('../db/mysql');
 
 exports.index = async (_req, res) => {
@@ -29,43 +30,25 @@ exports.approve = async (req, res) => {
   const id = Number(req.params.id);
   let conn;
   try {
+    console.log(`[APPROVE] Starting approve for approval ID: ${id}`);
     const record = await findById(id);
+    console.log(`[APPROVE] Found record:`, record);
     if (!record) return res.status(404).json({ message: 'Data tidak ditemukan' });
     if (record.status !== 'pending') {
       return res.status(400).json({ message: 'Approval hanya untuk status pending' });
     }
 
-    // Map request item (string) to master ATK item by name
-    const item = (await getItemByName(record.item)) || (await getItemByLooseName(record.item));
-    if (!item) {
-      return res.status(400).json({ message: 'Item tidak ditemukan di master ATK' });
-    }
-
     conn = await db.getConnection();
     await conn.beginTransaction();
 
-    // Check and reduce stock atomically
-    const affected = await kurangiStok({ atk_item_id: item.id, jumlah: record.qty }, conn);
-    if (affected === 0) {
-      await conn.rollback();
-      return res.status(400).json({ message: 'Stok tidak cukup untuk menyetujui request' });
-    }
-
-    // Insert barang keluar transaction to appear in history
-    await insertBarangKeluar({
-      atk_item_id: item.id,
-      jumlah: record.qty,
-      tanggal: record.date,
-      penerima: record.receiver,
-      unit_id: null,
-      pic: null,
-      satuan: record.unit,
-    }, conn);
-
+    // Only update status to approved, don't process barang masuk/keluar yet
+    console.log(`[APPROVE] Updating approval status...`);
     await setStatus({ id, status: 'approved', decided_by: req.user?.id || null }, conn);
-    await updateStatus(record.request_id, 'finished', conn);
+    console.log(`[APPROVE] Updating request status...`);
+    await updateStatus(record.request_id, 'approved', conn);
 
     await conn.commit();
+    console.log(`[APPROVE] Transaction committed successfully`);
 
     res.json({
       id,
@@ -79,7 +62,7 @@ exports.approve = async (req, res) => {
       status: 'approved',
     });
   } catch (err) {
-    console.error(err);
+    console.error(`[APPROVE] Error:`, err);
     if (conn) {
       try {
         await conn.rollback();
@@ -132,6 +115,91 @@ exports.reject = async (req, res) => {
       }
     }
     res.status(500).json({ message: 'Gagal menolak request' });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+exports.completeBarangMasuk = async (req, res) => {
+  const { approval_id, kode_barang, lokasi_simpan, qty, satuan, tanggal } = req.body;
+
+  // Validate required fields
+  if (!approval_id || !kode_barang || !lokasi_simpan || qty === undefined || !satuan || !tanggal) {
+    return res.status(400).json({ message: 'Data tidak lengkap' });
+  }
+
+  let conn;
+  try {
+    // Find the approval record
+    const approval = await findById(approval_id);
+    if (!approval) {
+      return res.status(404).json({ message: 'Approval tidak ditemukan' });
+    }
+    if (approval.status !== 'approved') {
+      return res.status(400).json({ message: 'Hanya approval yang sudah disetujui yang bisa dilengkapi' });
+    }
+
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    // Try to find existing item by name first
+    let item = (await getItemByName(approval.item)) || (await getItemByLooseName(approval.item));
+    
+    // If item doesn't exist, create it
+    if (!item) {
+      const itemId = await insertItem({
+        nama: approval.item,
+        stok: 0,
+        satuan,
+        kode_barang,
+        lokasi_simpan,
+      }, conn);
+      item = { id: itemId };
+    }
+
+    // Add stock to the item
+    await tambahStok({ atk_item_id: item.id, jumlah: qty }, conn);
+
+    // Record barang masuk
+    await insertBarangMasuk({
+      atk_item_id: item.id,
+      jumlah: qty,
+      tanggal,
+      satuan,
+      pic: req.user?.name || 'System',
+    }, conn);
+
+    // Insert barang keluar (untuk diberikan ke penerima)
+    await insertBarangKeluar({
+      atk_item_id: item.id,
+      jumlah: qty,
+      tanggal,
+      penerima: approval.receiver,
+      unit_id: null,
+      pic: req.user?.name || 'System',
+      satuan,
+    }, conn);
+
+    // Update approval status to 'finished'
+    await setStatus({ id: approval_id, status: 'finished', decided_by: req.user?.id || null }, conn);
+    await updateStatus(approval.request_id, 'finished', conn);
+
+    await conn.commit();
+
+    res.status(201).json({
+      message: 'Barang masuk berhasil dicatat dan diberikan ke penerima',
+      approval_id,
+    });
+  } catch (error) {
+    console.error(error);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error('Rollback gagal', rollbackErr);
+      }
+    }
+    res.status(500).json({ message: 'Gagal mencatat barang masuk' });
   } finally {
     if (conn) conn.release();
   }

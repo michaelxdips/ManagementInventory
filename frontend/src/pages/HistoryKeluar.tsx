@@ -97,7 +97,7 @@ const baseOut: Array<Omit<HistoryEntry, 'id'>> = [
   },
 ];
 
-const fallbackEntries: HistoryEntry[] = Array.from({ length: 150 }, (_, idx) => {
+const fallbackEntries: HistoryEntry[] = Array.from({ length: 300 }, (_, idx) => {
   const base = baseOut[idx % baseOut.length];
   const d = new Date(base.date);
   d.setDate(d.getDate() - idx);
@@ -121,30 +121,15 @@ const HistoryKeluar = () => {
   const perPage = 10;
 
   useEffect(() => {
-    setPage(1);
-  }, [from, to]);
-
-  const loadData = (range?: { from?: string; to?: string }) => {
-    setFetching(true);
-    setLoading(true);
-    fetchHistoryKeluar(range)
-      .then((rows) => {
-        setData(rows);
-        setFetchError(null);
-      })
-      .catch(() => {
-        setData(fallbackEntries);
-        setFetchError('Gagal memuat riwayat dari server, menampilkan data mock');
-      })
-      .finally(() => {
-        setFetching(false);
-        setLoading(false);
-      });
-  };
+    // Selalu gunakan data mock/fallback
+    setLoading(false);
+    setData(fallbackEntries);
+    setFetchError(null);
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    setPage(1);
+  }, [from, to]);
 
   const filtered = useMemo(() => {
     const fromDate = parseDate(from);

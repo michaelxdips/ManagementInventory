@@ -29,21 +29,19 @@ const AppRoutes = () => {
 				<Route element={<AuthLayout />}>
 					<Route path="/dashboard" element={<Dashboard />} />
 					<Route path="/items" element={<AtkItems />} />
-					<Route path="/history-masuk" element={<HistoryMasuk />} />
-					<Route path="/history-keluar" element={<HistoryKeluar />} />
-					<Route element={<RoleRoute allow={["user"]} />}>
-						<Route path="/requests" element={<Requests />} />
-						<Route path="/requests/create" element={<RequestsCreate />} />
-					</Route>
+				<Route element={<RoleRoute allow={["user"]} />}>
+					<Route path="/requests" element={<Requests />} />
+					<Route path="/requests/create" element={<RequestsCreate />} />
 					<Route path="/information" element={<Information />} />
-					<Route element={<RoleRoute allow={["admin", "superadmin"]} />}>
-						<Route path="/approval" element={<Approval />} />
-					</Route>
-					<Route element={<RoleRoute allow={["admin", "superadmin"]} />}>
-						<Route path="/barang-kosong" element={<BarangKosong />} />
-						<Route path="/manage-units" element={<ManageUnits />} />
-						<Route path="/manage-units/create" element={<ManageUnitsCreate />} />
-					</Route>
+				<Route path="/barang-kosong" element={<BarangKosong />} />
+			</Route>
+			<Route element={<RoleRoute allow={["admin", "superadmin"]} />}>
+				<Route path="/history-masuk" element={<HistoryMasuk />} />
+				<Route path="/history-keluar" element={<HistoryKeluar />} />
+				<Route path="/approval" element={<Approval />} />
+					<Route path="/manage-units" element={<ManageUnits />} />
+					<Route path="/manage-units/create" element={<ManageUnitsCreate />} />
+				</Route>
 					<Route path="/settings" element={<ProfileSettings />} />
 					<Route path="/settings/password" element={<PasswordSettings />} />
 				</Route>
