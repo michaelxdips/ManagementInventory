@@ -118,8 +118,8 @@ const Requests = () => {
                   <TD>{row.receiver}</TD>
                   <TD>{row.dept}</TD>
                   <TD>
-                    <Badge variant={row.status === 'PENDING' ? 'pending' : row.status === 'FINISHED' ? 'approved' : 'rejected'}>
-                      {row.status === 'FINISHED' ? 'Finished' : row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                    <Badge variant={row.status === 'PENDING' ? 'pending' : row.status === 'APPROVED' ? 'approved' : 'rejected'}>
+                      {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
                     </Badge>
                   </TD>
                   <TD>

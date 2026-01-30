@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
-import { fetchItems, Item } from '../api/items.api';
+import { fetchItems, Item, updateItem, takeItem } from '../api/items.api';
 import useAuth from '../hooks/useAuth';
 
 const fallbackItems: Item[] = [
@@ -18,6 +19,13 @@ const fallbackItems: Item[] = [
 	{ id: 10, name: 'Ball Liner Hitam', code: 'BAL-LNR-HTM', quantity: 19, unit: 'pcs', location: 'Lemari' },
 ];
 
+interface EditFormData {
+	name: string;
+	code: string;
+	unit: string;
+	location: string;
+}
+
 const AtkItems = () => {
 	const { hasRole } = useAuth();
 	const canOperateStock = hasRole(['admin', 'superadmin']);
@@ -29,6 +37,19 @@ const AtkItems = () => {
 	const [items, setItems] = useState<Item[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [showEditModal, setShowEditModal] = useState(false);
+	const [editingItem, setEditingItem] = useState<Item | null>(null);
+	const [editFormData, setEditFormData] = useState<EditFormData>({ name: '', code: '', unit: '', location: '' });
+	const [editLoading, setEditLoading] = useState(false);
+	const [editError, setEditError] = useState<string | null>(null);
+	const [showTakeModal, setShowTakeModal] = useState(false);
+	const [takeItem_selected, setTakeItem_selected] = useState<Item | null>(null);
+	const [takeQty, setTakeQty] = useState(1);
+	const [takeDate, setTakeDate] = useState('');
+	const [takePenerima, setTakePenerima] = useState('');
+	const [takeLoading, setTakeLoading] = useState(false);
+	const [takeError, setTakeError] = useState<string | null>(null);
+	const [takeMessage, setTakeMessage] = useState<string | null>(null);
 
 	const perPage = 10;
 
@@ -84,6 +105,103 @@ const AtkItems = () => {
 		setSortOption(draftSort);
 	};
 
+	const handleEditClick = (item: Item) => {
+		setEditingItem(item);
+		setEditFormData({
+			name: item.name,
+			code: item.code,
+			unit: item.unit,
+			location: item.location,
+		});
+		setEditError(null);
+		setShowEditModal(true);
+	};
+
+	const handleEditSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!editingItem || !editFormData.name || !editFormData.unit) {
+			setEditError('Nama barang dan satuan tidak boleh kosong');
+			return;
+		}
+
+		setEditLoading(true);
+		setEditError(null);
+		try {
+			await updateItem(editingItem.id, {
+				nama_barang: editFormData.name,
+				kode_barang: editFormData.code,
+				satuan: editFormData.unit,
+				lokasi_simpan: editFormData.location,
+			});
+			// Update local state
+			setItems(items.map(item => 
+				item.id === editingItem.id 
+					? { ...item, name: editFormData.name, code: editFormData.code, unit: editFormData.unit, location: editFormData.location }
+					: item
+			));
+			setShowEditModal(false);
+			setEditingItem(null);
+		} catch (err: any) {
+			setEditError(err.message || 'Gagal memperbarui item');
+		} finally {
+			setEditLoading(false);
+		}
+	};
+
+	const handleTakeClick = (item: Item) => {
+		if (item.quantity <= 0) {
+			setTakeError('Barang ini habis, silahkan buat request');
+			return;
+		}
+		setTakeItem_selected(item);
+		setTakeQty(1);
+		const today = new Date().toISOString().split('T')[0];
+		setTakeDate(today);
+		setTakePenerima('');
+		setTakeError(null);
+		setTakeMessage(null);
+		setShowTakeModal(true);
+	};
+
+	const handleTakeSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!takeItem_selected || takeQty <= 0) {
+			setTakeError('Jumlah harus lebih dari 0');
+			return;
+		}
+		if (takeQty > takeItem_selected.quantity) {
+			setTakeError(`Stok hanya ${takeItem_selected.quantity}`);
+			return;
+		}
+		if (!takePenerima.trim()) {
+			setTakeError('Penerima tidak boleh kosong');
+			return;
+		}
+
+		setTakeLoading(true);
+		setTakeError(null);
+		try {
+			console.log('[TAKE_SUBMIT] Data yang dikirim:', {
+				itemId: takeItem_selected.id,
+				qty: takeQty,
+				penerima: takePenerima,
+			});
+			await takeItem(takeItem_selected.id, takeQty, takePenerima);
+			console.log('[TAKE_SUBMIT] Sukses ambil barang');
+			setTakeMessage(`${takeItem_selected.name} (${takeQty} ${takeItem_selected.unit}) berhasil diambil`);
+			setShowTakeModal(false);
+			setTakeItem_selected(null);
+			// Reload items
+			const updated = await fetchItems();
+			setItems(updated);
+		} catch (err: any) {
+			console.error('[TAKE_SUBMIT] Error:', err);
+			setTakeError(err.message || 'Gagal mengambil barang');
+		} finally {
+			setTakeLoading(false);
+		}
+	};
+
 	return (
 		<div className="items-page">
 			<div className="items-filters">
@@ -126,7 +244,7 @@ const AtkItems = () => {
 							<TH>Jumlah</TH>
 							<TH>Satuan</TH>
 							<TH>Lokasi Simpan</TH>
-							{canOperateStock && <TH style={{ width: '140px' }}>Action</TH>}
+							<TH style={{ width: '160px' }}>Action</TH>
 						</TR>
 					</THead>
 					<TBody>
@@ -139,26 +257,33 @@ const AtkItems = () => {
 								<TD colSpan={7} className="empty-row">Tidak ada data</TD>
 							</TR>
 						) : (
-							displayItems.map((item) => (
+							displayItems.map((item, idx) => (
 								<TR key={item.id}>
-									<TD>{item.id}</TD>
+									<TD>{startIndex + idx + 1}</TD>
 									<TD>{item.name}</TD>
 									<TD>{item.code}</TD>
 									<TD>{item.quantity.toLocaleString('id-ID')}</TD>
 									<TD>{item.unit}</TD>
 									<TD>{item.location}</TD>
-									{canOperateStock && (
-										<TD>
-											<div className="action-buttons">
-												<Button type="button" variant="ghost" size="sm" disabled>
-													Ambil
-												</Button>
-												<Button type="button" variant="ghost" size="sm" disabled>
+									<TD>
+										<div className="action-buttons">
+											{canOperateStock ? (
+												<Button type="button" variant="ghost" size="sm" onClick={() => handleEditClick(item)}>
 													✏ Edit
 												</Button>
-											</div>
-										</TD>
-									)}
+											) : (
+												<Button 
+													type="button" 
+													variant={item.quantity > 0 ? 'primary' : 'secondary'} 
+													size="sm" 
+													onClick={() => handleTakeClick(item)}
+													disabled={item.quantity <= 0}
+												>
+													{item.quantity > 0 ? '✓ Ambil' : 'Habis'}
+												</Button>
+											)}
+										</div>
+									</TD>
 								</TR>
 							))
 						)}
@@ -172,6 +297,146 @@ const AtkItems = () => {
 					<Pagination current={currentPage} total={totalPages} onChange={setPage} />
 				</div>
 			</div>
+
+			{/* Edit Modal */}
+			{showEditModal && (
+				<div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+					<div className="modal-content" onClick={(e) => e.stopPropagation()}>
+						<h2 className="modal-title">Edit Barang</h2>
+						{editError && <p className="danger-text">{editError}</p>}
+						<form onSubmit={handleEditSubmit} className="edit-form">
+							<div className="form-group">
+								<label htmlFor="edit-name">Nama Barang *</label>
+								<Input
+									id="edit-name"
+									type="text"
+									value={editFormData.name}
+									onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+									placeholder="Nama barang"
+									required
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="edit-code">Kode Barang</label>
+								<Input
+									id="edit-code"
+									type="text"
+									value={editFormData.code}
+									onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value })}
+									placeholder="Kode barang"
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="edit-unit">Satuan *</label>
+								<Input
+									id="edit-unit"
+									type="text"
+									value={editFormData.unit}
+									onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
+									placeholder="Satuan"
+									required
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="edit-location">Lokasi Simpan</label>
+								<Input
+									id="edit-location"
+									type="text"
+									value={editFormData.location}
+									onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+									placeholder="Lokasi simpan"
+								/>
+							</div>
+							<div className="form-actions">
+								<Button type="submit" disabled={editLoading}>
+									{editLoading ? 'Menyimpan...' : 'Simpan'}
+								</Button>
+								<Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
+									Batal
+								</Button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{/* Take Item Modal */}
+			{showTakeModal && takeItem_selected && (
+				<div className="modal-overlay" onClick={() => setShowTakeModal(false)}>
+					<div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+						<h2 className="modal-title">Form Ambil ATK</h2>
+						{takeMessage && <p className="success-text">{takeMessage}</p>}
+						{takeError && <p className="danger-text">{takeError}</p>}
+						<form onSubmit={handleTakeSubmit} className="edit-form">
+							<div className="form-group">
+								<label htmlFor="take-name">Nama Barang</label>
+								<Input
+									id="take-name"
+									type="text"
+									value={takeItem_selected.name}
+									disabled
+									placeholder="Nama barang"
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="take-date">Tanggal</label>
+								<Input
+									id="take-date"
+									type="date"
+									value={takeDate}
+									onChange={(e) => setTakeDate(e.target.value)}
+									required
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="take-qty">Jumlah</label>
+								<Input
+									id="take-qty"
+									type="number"
+									min="1"
+									max={takeItem_selected.quantity}
+									value={takeQty}
+									onChange={(e) => setTakeQty(Math.max(1, parseInt(e.target.value) || 1))}
+									placeholder="Jumlah"
+									required
+								/>
+								<p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+									Stok tersedia: {takeItem_selected.quantity}
+								</p>
+							</div>
+							<div className="form-group">
+								<label htmlFor="take-unit">Satuan</label>
+								<Input
+									id="take-unit"
+									type="text"
+									value={takeItem_selected.unit}
+									disabled
+									placeholder="Satuan"
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="take-penerima">Penerima</label>
+								<Input
+									id="take-penerima"
+									type="text"
+									value={takePenerima}
+									onChange={(e) => setTakePenerima(e.target.value)}
+									placeholder="Nama penerima"
+									required
+								/>
+							</div>
+							<div className="form-actions">
+								<Button type="submit" disabled={takeLoading}>
+									{takeLoading ? 'Menyimpan...' : 'Simpan'}
+								</Button>
+								<Button type="button" variant="secondary" onClick={() => setShowTakeModal(false)}>
+									Batal
+								</Button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

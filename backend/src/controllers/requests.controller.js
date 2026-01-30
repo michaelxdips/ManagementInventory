@@ -41,6 +41,7 @@ function normalizeStatus(val) {
   if (!val) return val;
   const status = val.toString().toLowerCase();
   if (status === 'pending') return 'PENDING';
+  if (status === 'approved') return 'APPROVED';
   if (status === 'rejected') return 'REJECTED';
   if (status === 'finished') return 'FINISHED';
   return status.toUpperCase();

@@ -14,13 +14,12 @@ type NavItem = {
 const navItems: NavItem[] = [
 	{ label: 'Dashboard', path: '/dashboard', icon: 'grid' },
 	{ label: 'Items', path: '/items', icon: 'box' },
-	{ label: 'History Masuk', path: '/history-masuk', icon: 'in' },
-	{ label: 'History Keluar', path: '/history-keluar', icon: 'out' },
+	{ label: 'History Masuk', path: '/history-masuk', icon: 'in', roles: ['admin', 'superadmin'] },
+	{ label: 'History Keluar', path: '/history-keluar', icon: 'out', roles: ['admin', 'superadmin'] },
 	{ label: 'Requests', path: '/requests', icon: 'request', roles: ['user'] },
-	{ label: 'Information', path: '/information', icon: 'info' },
-	// Approval hidden from user/viewer by role restriction
+	{ label: 'Information', path: '/information', icon: 'info', roles: ['user'] },
+	{ label: 'Barang Kosong', path: '/barang-kosong', icon: 'empty', roles: ['user'] },
 	{ label: 'Approval', path: '/approval', icon: 'check', roles: ['admin', 'superadmin'] },
-	{ label: 'Barang Kosong', path: '/barang-kosong', icon: 'empty', roles: ['admin', 'superadmin'] },
 	{ label: 'Manage Units', path: '/manage-units', icon: 'units', roles: ['admin', 'superadmin'] },
 ];
 

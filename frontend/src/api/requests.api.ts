@@ -8,7 +8,7 @@ export type RequestItem = {
   unit: string;
   receiver: string;
   dept: string;
-  status: 'PENDING' | 'REJECTED' | 'FINISHED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'FINISHED';
 };
 
 export type CreateRequestPayload = {
