@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger.js';
 
@@ -24,6 +26,18 @@ app.use(cors({
     origin: true, // Allow any origin (for local network development)
     credentials: true,
 }));
+
+// Security Headers
+app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { message: 'Terlalu banyak request, coba lagi nanti.' }
+});
+app.use(limiter);
+
 app.use(express.json());
 
 // Request logging
