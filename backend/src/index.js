@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './config/swagger.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -41,6 +43,9 @@ app.use('/api/requests', requestsRoutes);
 app.use('/api/units', unitsRoutes);
 app.use('/api/barang-kosong', barangKosongRoutes);
 app.use('/api/users', usersRoutes);
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
