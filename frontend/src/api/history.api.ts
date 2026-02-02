@@ -26,5 +26,9 @@ const buildQuery = (filter?: HistoryFilter) => {
   return qs ? `?${qs}` : '';
 };
 
+// Admin only
 export const fetchHistoryMasuk = (filter?: HistoryFilter) => http.get<HistoryEntry[]>(`/history/masuk${buildQuery(filter)}`);
 export const fetchHistoryKeluar = (filter?: HistoryFilter) => http.get<HistoryEntry[]>(`/history/keluar${buildQuery(filter)}`);
+
+// User - get their own history
+export const fetchHistoryUser = (filter?: HistoryFilter) => http.get<HistoryEntry[]>(`/history/user${buildQuery(filter)}`);

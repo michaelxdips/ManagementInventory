@@ -12,17 +12,10 @@ export type ApprovalItem = {
   status: 'pending' | 'approved' | 'rejected';
 };
 
-export type CompleteBarangMasukPayload = {
-  approval_id: number;
-  kode_barang: string;
-  lokasi_simpan: string;
-  qty: number;
-  satuan: string;
-  tanggal: string;
+export type ApproveResponse = ApprovalItem & {
+  message?: string;
 };
 
 export const fetchApproval = () => http.get<ApprovalItem[]>('/approval');
-export const approveRequest = (id: number) => http.post<ApprovalItem>(`/approval/${id}/approve`);
+export const approveRequest = (id: number) => http.post<ApproveResponse>(`/approval/${id}/approve`);
 export const rejectRequest = (id: number) => http.post<ApprovalItem>(`/approval/${id}/reject`);
-export const completeBarangMasuk = (payload: CompleteBarangMasukPayload) => 
-  http.post(`/approval/complete-barang-masuk`, payload);

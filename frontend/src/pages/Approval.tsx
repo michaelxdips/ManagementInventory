@@ -1,122 +1,8 @@
 import { useEffect, useState } from 'react';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
-import { approveRequest, fetchApproval, rejectRequest, ApprovalItem, completeBarangMasuk } from '../api/approval.api';
-
-const fallbackRows: ApprovalItem[] = [
-  {
-    id: 1,
-    date: '2026-01-15',
-    name: 'Map Bening Dataflex',
-    code: 'MAP-CLS-DTX',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Wulan',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 2,
-    date: '2026-01-15',
-    name: 'kertas paper one A4',
-    code: 'PPR-ONE-A4',
-    qty: 1,
-    unit: 'rim',
-    receiver: 'Wulan',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 3,
-    date: '2026-01-05',
-    name: 'Map Bening Dataflex',
-    code: 'MAP-CLS-DTX',
-    qty: 2,
-    unit: 'pcs',
-    receiver: 'Alma',
-    dept: 'Performance, Risk & QOS',
-    status: 'pending',
-  },
-  {
-    id: 4,
-    date: '2026-01-06',
-    name: 'kertas paper one A4',
-    code: 'PPR-ONE-A4',
-    qty: 1,
-    unit: 'rim',
-    receiver: 'wulan',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 5,
-    date: '2026-01-07',
-    name: 'Baterai AAA',
-    code: 'BTR-A3',
-    qty: 2,
-    unit: 'pcs',
-    receiver: 'Akbar',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 6,
-    date: '2026-01-07',
-    name: 'Pilot Hitam',
-    code: 'PLT-HTM',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'eti',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 7,
-    date: '2026-01-07',
-    name: 'Pilot Biru',
-    code: 'PLT-BLU',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Eti',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 8,
-    date: '2026-01-06',
-    name: 'Lakban Hijau Besar',
-    code: 'SLS-HJU-BIG',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Taufik',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 9,
-    date: '2026-01-06',
-    name: 'kertas paper one A4',
-    code: 'PPR-ONE-A4',
-    qty: 1,
-    unit: 'rim',
-    receiver: 'wulan',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-  {
-    id: 10,
-    date: '2026-01-06',
-    name: 'Label Tom & Jerry No.121',
-    code: 'LBL-TNJ-121',
-    qty: 1,
-    unit: 'bungkus',
-    receiver: 'Faizal',
-    dept: 'Share Service & General Support',
-    status: 'pending',
-  },
-];
+import { approveRequest, fetchApproval, rejectRequest, ApprovalItem } from '../api/approval.api';
 
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -147,14 +33,7 @@ const Approval = () => {
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ApprovalItem | null>(null);
-  const [completeFormData, setCompleteFormData] = useState({
-    itemCode: '',
-    location: '',
-  });
-  const [completeLoading, setCompleteLoading] = useState(false);
-  const [completeError, setCompleteError] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
   const loadData = () => {
     setLoading(true);
@@ -164,8 +43,8 @@ const Approval = () => {
         setError(null);
       })
       .catch(() => {
-        setData(fallbackRows);
-        setError('Gagal memuat data dari server, menampilkan data mock');
+        setData([]);
+        setError('Gagal memuat data dari server');
       })
       .finally(() => setLoading(false));
   };
@@ -176,76 +55,71 @@ const Approval = () => {
 
   useEffect(() => {
     if (!statusMessage) return;
-    const timer = setTimeout(() => setStatusMessage(null), 2000);
+    const timer = setTimeout(() => setStatusMessage(null), 4000);
     return () => clearTimeout(timer);
   }, [statusMessage]);
 
+  // OPTIMIZATION: Auto-Refresh (Real-time polling)
+  // Poll every 10 seconds for new requests
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only poll if not currently processing or loading
+      if (!processingId && !loading) {
+        // Silent update (don't set loading=true)
+        fetchApproval().then(setData).catch(() => { });
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [processingId, loading]);
+
   const handleApprove = async (item: ApprovalItem) => {
+    setProcessingId(item.id);
     try {
-      // Step 1: Approve request first
-      const approvedItem = await approveRequest(item.id);
-      
-      // Step 2: On success, open modal to complete barang masuk with updated item
-      setSelectedItem(approvedItem);
-      setCompleteFormData({
-        itemCode: approvedItem.code || '',
-        location: '',
-      });
-      setCompleteError(null);
-      setShowCompleteModal(true);
-      
-      // Step 3: Reload data to refresh table with approved status
+      const result = await approveRequest(item.id);
+      setStatusMessage(result.message || `Permintaan ${item.name} disetujui. Stok berkurang.`);
       loadData();
     } catch (err: any) {
-      setStatusMessage(err.message || 'Gagal menyetujui permintaan');
-    }
-  };
-
-  const handleCompleteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedItem || !completeFormData.itemCode || !completeFormData.location) {
-      setCompleteError('Kode barang dan lokasi tidak boleh kosong');
-      return;
-    }
-
-    setCompleteLoading(true);
-    setCompleteError(null);
-    try {
-      await completeBarangMasuk({
-        approval_id: selectedItem.id,
-        kode_barang: completeFormData.itemCode,
-        lokasi_simpan: completeFormData.location,
-        qty: selectedItem.qty,
-        satuan: selectedItem.unit,
-        tanggal: selectedItem.date,
-      });
-      setStatusMessage('Barang masuk berhasil dicatat');
-      setShowCompleteModal(false);
-      setSelectedItem(null);
-      loadData();
-    } catch (err: any) {
-      setCompleteError(err.message || 'Gagal mencatat barang masuk');
+      setError(err.message || 'Gagal menyetujui permintaan');
     } finally {
-      setCompleteLoading(false);
+      setProcessingId(null);
     }
   };
 
-  const handleReject = (id: number) => {
-    rejectRequest(id)
-      .then(() => {
-        setStatusMessage('Permintaan ditolak');
-        setError(null);
-        loadData();
-      })
-      .catch(() => setError('Gagal menolak (server)'));
+  const handleReject = async (item: ApprovalItem) => {
+    setProcessingId(item.id);
+    try {
+      await rejectRequest(item.id);
+      setStatusMessage('Permintaan ditolak');
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Gagal menolak permintaan');
+    } finally {
+      setProcessingId(null);
+    }
   };
+
   return (
     <div className="history-page">
       <div className="history-card">
         <h2 className="history-title">Permintaan Barang Keluar</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Setujui permintaan untuk mengurangi stok dan mencatat barang keluar.
+        </p>
 
-        {statusMessage && <p className="items-meta" role="status">{statusMessage}</p>}
+        {statusMessage && (
+          <div style={{
+            padding: '12px 16px',
+            background: 'var(--success-bg, #d4edda)',
+            color: 'var(--success-text, #155724)',
+            borderRadius: '6px',
+            marginBottom: '16px'
+          }}>
+            {statusMessage}
+          </div>
+        )}
         {error && <p className="danger-text" role="alert">{error}</p>}
+
         <Table>
           <THead>
             <TR>
@@ -257,14 +131,17 @@ const Approval = () => {
               <TH>Satuan</TH>
               <TH>Penerima</TH>
               <TH>Unit</TH>
-              <TH>Status</TH>
-              <TH style={{ width: '140px' }}>Action</TH>
+              <TH style={{ width: '160px' }}>Action</TH>
             </TR>
           </THead>
           <TBody>
             {loading ? (
               <TR>
-                <TD colSpan={10} className="empty-row">Memuat data...</TD>
+                <TD colSpan={9} className="empty-row">Memuat data...</TD>
+              </TR>
+            ) : data.length === 0 ? (
+              <TR>
+                <TD colSpan={9} className="empty-row">Tidak ada permintaan yang menunggu persetujuan</TD>
               </TR>
             ) : (
               data.map((row, idx) => (
@@ -272,28 +149,31 @@ const Approval = () => {
                   <TD>{idx + 1}</TD>
                   <TD>{row.date}</TD>
                   <TD>{row.name}</TD>
-                  <TD>{row.code}</TD>
+                  <TD>{row.code || '-'}</TD>
                   <TD>{row.qty}</TD>
                   <TD>{row.unit}</TD>
                   <TD>{row.receiver}</TD>
                   <TD>{row.dept}</TD>
                   <TD>
-                    <Badge variant={toBadgeVariant(row.status)}>{formatStatus(row.status)}</Badge>
-                  </TD>
-                  <TD>
                     <div className="action-buttons">
-                      {row.status === 'pending' ? (
-                        <>
-                          <Button type="button" variant="secondary" size="sm" onClick={() => handleApprove(row)}>
-                            <CheckIcon /> Setujui
-                          </Button>
-                          <Button type="button" variant="danger" size="sm" onClick={() => handleReject(row.id)}>
-                            <XIcon /> Tolak
-                          </Button>
-                        </>
-                      ) : (
-                        <span className="items-meta">-</span>
-                      )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleApprove(row)}
+                        disabled={processingId === row.id}
+                      >
+                        <CheckIcon /> {processingId === row.id ? '...' : 'Setujui'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleReject(row)}
+                        disabled={processingId === row.id}
+                      >
+                        <XIcon /> Tolak
+                      </Button>
                     </div>
                   </TD>
                 </TR>
@@ -302,78 +182,6 @@ const Approval = () => {
           </TBody>
         </Table>
       </div>
-
-      {/* Complete Barang Masuk Modal */}
-      {showCompleteModal && selectedItem && (
-        <div className="modal-overlay" onClick={() => setShowCompleteModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">Lengkapi Data Barang Masuk</h2>
-            {completeError && <p className="danger-text">{completeError}</p>}
-            <form onSubmit={handleCompleteSubmit} className="edit-form">
-              <div className="form-group">
-                <label htmlFor="item-name">Nama Barang</label>
-                <Input
-                  id="item-name"
-                  type="text"
-                  value={selectedItem.name}
-                  disabled
-                  placeholder="Nama barang"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="item-code">Kode Barang *</label>
-                <Input
-                  id="item-code"
-                  type="text"
-                  value={completeFormData.itemCode}
-                  onChange={(e) => setCompleteFormData({ ...completeFormData, itemCode: e.target.value })}
-                  placeholder="Kode barang"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="item-location">Lokasi Simpan *</label>
-                <Input
-                  id="item-location"
-                  type="text"
-                  value={completeFormData.location}
-                  onChange={(e) => setCompleteFormData({ ...completeFormData, location: e.target.value })}
-                  placeholder="Lokasi simpan"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="item-qty">Jumlah</label>
-                <Input
-                  id="item-qty"
-                  type="number"
-                  value={selectedItem.qty}
-                  disabled
-                  placeholder="Jumlah"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="item-unit">Satuan</label>
-                <Input
-                  id="item-unit"
-                  type="text"
-                  value={selectedItem.unit}
-                  disabled
-                  placeholder="Satuan"
-                />
-              </div>
-              <div className="form-actions">
-                <Button type="submit" disabled={completeLoading}>
-                  {completeLoading ? 'Menyimpan...' : 'Selesai & Catat Barang Masuk'}
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setShowCompleteModal(false)}>
-                  Batal
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

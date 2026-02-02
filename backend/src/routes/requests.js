@@ -1,0 +1,90 @@
+import { Router } from 'express';
+import db from '../config/db.js';
+import { authenticate, authorize } from '../middleware/auth.js';
+
+const router = Router();
+
+// GET /api/requests - List requests
+router.get('/', authenticate, (req, res) => {
+    try {
+        let query = `
+      SELECT 
+        id,
+        date,
+        item,
+        qty,
+        unit,
+        receiver,
+        dept,
+        status
+      FROM requests
+    `;
+        const params = [];
+
+        // If user role, only show their own requests
+        if (req.user.role === 'user') {
+            query += ' WHERE user_id = ?';
+            params.push(req.user.id);
+        }
+
+        query += ' ORDER BY created_at DESC';
+
+        const requests = db.prepare(query).all(...params);
+        res.json(requests);
+    } catch (error) {
+        console.error('Get requests error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// POST /api/requests - Create new request
+router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), (req, res) => {
+    try {
+        const { date, item, qty, unit, receiver, dept } = req.body;
+
+        if (!date || !item || !qty || !unit || !receiver || !dept) {
+            return res.status(400).json({ message: 'Semua field wajib diisi' });
+        }
+
+        const result = db.prepare(`
+      INSERT INTO requests (date, item, qty, unit, receiver, dept, status, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?)
+    `).run(date, item, qty, unit, receiver, dept, req.user.id);
+
+        const newRequest = db.prepare('SELECT * FROM requests WHERE id = ?').get(result.lastInsertRowid);
+
+        res.status(201).json(newRequest);
+    } catch (error) {
+        console.error('Create request error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// GET /api/requests/:id - Get single request
+router.get('/:id', authenticate, (req, res) => {
+    try {
+        const { id } = req.params;
+
+        let query = 'SELECT * FROM requests WHERE id = ?';
+        const params = [id];
+
+        // If user role, only allow viewing their own requests
+        if (req.user.role === 'user') {
+            query += ' AND user_id = ?';
+            params.push(req.user.id);
+        }
+
+        const request = db.prepare(query).get(...params);
+
+        if (!request) {
+            return res.status(404).json({ message: 'Request tidak ditemukan' });
+        }
+
+        res.json(request);
+    } catch (error) {
+        console.error('Get request error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+export default router;

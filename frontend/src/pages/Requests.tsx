@@ -6,29 +6,6 @@ import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { fetchRequests, RequestItem } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
 
-const fallbackRows: RequestItem[] = [
-  {
-    id: 1,
-    date: '2026-01-21',
-    item: 'Gunting',
-    qty: 2,
-    unit: 'pieces',
-    receiver: 'Ayu',
-    dept: 'Government Service',
-    status: 'PENDING',
-  },
-  {
-    id: 2,
-    date: '2025-08-29',
-    item: 'Monitor AOC',
-    qty: 5,
-    unit: 'pcs',
-    receiver: 'eti',
-    dept: 'Share Service & General Support',
-    status: 'REJECTED',
-  },
-];
-
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 5v14M5 12h14" />
@@ -38,7 +15,6 @@ const PlusIcon = () => (
 const Requests = () => {
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { hasRole } = useAuth();
@@ -53,10 +29,10 @@ const Requests = () => {
         setData(rows);
         setError(null);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
-        setData(fallbackRows);
-        setError('Gagal memuat data dari server, menampilkan data mock');
+        setData([]);
+        setError(err.message || 'Gagal memuat data dari server');
       })
       .finally(() => {
         if (!mounted) return;
@@ -67,11 +43,16 @@ const Requests = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (!statusMessage) return;
-    const timer = setTimeout(() => setStatusMessage(null), 2000);
-    return () => clearTimeout(timer);
-  }, [statusMessage]);
+  const getStatusVariant = (status: string) => {
+    const s = status.toUpperCase();
+    if (s === 'APPROVED') return 'approved';
+    if (s === 'REJECTED') return 'rejected';
+    return 'pending';
+  };
+
+  const formatStatus = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
 
   return (
     <div className="requests-page">
@@ -86,7 +67,6 @@ const Requests = () => {
       </div>
 
       <div className="history-card">
-        {statusMessage && <p className="items-meta" role="status">{statusMessage}</p>}
         {error && <p className="danger-text" role="alert">{error}</p>}
         <Table>
           <THead>
@@ -99,13 +79,16 @@ const Requests = () => {
               <TH>Penerima</TH>
               <TH>Unit</TH>
               <TH>Status</TH>
-              <TH style={{ width: '200px' }}>Action</TH>
             </TR>
           </THead>
           <TBody>
             {loading ? (
               <TR>
-                <TD colSpan={9} className="empty-row">Memuat data...</TD>
+                <TD colSpan={8} className="empty-row">Memuat data...</TD>
+              </TR>
+            ) : data.length === 0 ? (
+              <TR>
+                <TD colSpan={8} className="empty-row">Tidak ada permintaan</TD>
               </TR>
             ) : (
               data.map((row, idx) => (
@@ -118,12 +101,9 @@ const Requests = () => {
                   <TD>{row.receiver}</TD>
                   <TD>{row.dept}</TD>
                   <TD>
-                    <Badge variant={row.status === 'PENDING' ? 'pending' : row.status === 'APPROVED' ? 'approved' : 'rejected'}>
-                      {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                    <Badge variant={getStatusVariant(row.status)}>
+                      {formatStatus(row.status)}
                     </Badge>
-                  </TD>
-                  <TD>
-                    <div className="items-meta">Tidak ada aksi di halaman ini.</div>
                   </TD>
                 </TR>
               ))

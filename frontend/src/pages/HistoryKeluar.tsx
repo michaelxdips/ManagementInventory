@@ -2,107 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Button from '../components/ui/Button';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
-import { fetchHistoryKeluar, HistoryEntry } from '../api/history.api';
-
-const baseOut: Array<Omit<HistoryEntry, 'id'>> = [
-  {
-    date: '2026-01-21',
-    name: 'Folder One Transparent',
-    code: 'FDR-ONE-TPR',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Afrizal',
-    dept: 'Share Service & General Support',
-  },
-  {
-    date: '2026-01-05',
-    name: 'kertas paper one A4',
-    code: 'PPR-ONE-A4',
-    qty: 1,
-    unit: 'rim',
-    receiver: 'Holisah',
-    dept: 'Share Service & General Support',
-  },
-  {
-    date: '2026-01-05',
-    name: 'Paper Clip Joyko',
-    code: 'PPR-CLP-JYO',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Holisah',
-    dept: 'Share Service & General Support',
-  },
-  {
-    date: '2026-01-02',
-    name: 'Folder One Transparent',
-    code: 'FDR-ONE-TPR',
-    qty: 14,
-    unit: 'pcs',
-    receiver: 'Akbar untuk selesai Magang & PKL',
-    dept: 'Share Service & General Support',
-  },
-  {
-    date: '2026-01-02',
-    name: 'Gunting Kecil',
-    code: 'GK01',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Alma',
-    dept: 'Performance, Risk & QOS',
-  },
-  {
-    date: '2026-01-02',
-    name: 'Double Tape Kecil Putih',
-    code: 'DTP-SML-WHT',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Alma',
-    dept: 'Performance, Risk & QOS',
-  },
-  {
-    date: '2025-12-17',
-    name: 'Folder One Kuning',
-    code: 'FDR-ONE-YLW',
-    qty: 5,
-    unit: 'pcs',
-    receiver: 'Syifa',
-    dept: 'Government Service',
-  },
-  {
-    date: '2025-12-17',
-    name: 'Folder One Transparent',
-    code: 'FDR-ONE-TPR',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Alma',
-    dept: 'Performance, Risk & QOS',
-  },
-  {
-    date: '2025-12-17',
-    name: 'kertas paper one A4',
-    code: 'PPR-ONE-A4',
-    qty: 1,
-    unit: 'rim',
-    receiver: 'wulan',
-    dept: 'Share Service & General Support',
-  },
-  {
-    date: '2025-12-17',
-    name: 'Paper Clip Joyko',
-    code: 'PPR-CLP-JYO',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'Fira',
-    dept: 'Business Service',
-  },
-];
-
-const fallbackEntries: HistoryEntry[] = Array.from({ length: 300 }, (_, idx) => {
-  const base = baseOut[idx % baseOut.length];
-  const d = new Date(base.date);
-  d.setDate(d.getDate() - idx);
-  return { id: idx + 1, ...base, date: d.toISOString().slice(0, 10) };
-});
+import { fetchHistoryKeluar, HistoryEntry, HistoryFilter } from '../api/history.api';
 
 const parseDate = (value: string) => (value ? new Date(value) : null);
 
@@ -116,15 +16,27 @@ const HistoryKeluar = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [fetching, setFetching] = useState(false);
 
   const perPage = 10;
 
-  useEffect(() => {
-    // Selalu gunakan data mock/fallback
-    setLoading(false);
-    setData(fallbackEntries);
+  const loadData = (filter?: HistoryFilter) => {
+    setLoading(true);
     setFetchError(null);
+    fetchHistoryKeluar(filter)
+      .then((rows) => {
+        setData(rows);
+        setFetchError(null);
+      })
+      .catch(() => {
+        setFetchError('Gagal memuat data dari server');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -153,6 +65,7 @@ const HistoryKeluar = () => {
   const startIndex = (currentPage - 1) * perPage;
   const endIndex = Math.min(startIndex + perPage, filtered.length);
   const pageRows = filtered.slice(startIndex, endIndex);
+
   const applyFilters = () => {
     const nextFrom = parseDate(draftFrom);
     const nextTo = parseDate(draftTo);
@@ -173,6 +86,7 @@ const HistoryKeluar = () => {
     setTo('');
     setPage(1);
     setError(null);
+    loadData();
   };
 
   return (
@@ -233,7 +147,7 @@ const HistoryKeluar = () => {
       </div>
 
       <div className="history-card">
-          {fetchError && <p className="danger-text" role="alert">{fetchError}</p>}
+        {fetchError && <p className="danger-text" role="alert">{fetchError}</p>}
         <Table>
           <THead>
             <TR>
@@ -248,28 +162,28 @@ const HistoryKeluar = () => {
             </TR>
           </THead>
           <TBody>
-          {loading ? (
-            <TR>
-              <TD colSpan={8} className="empty-row">Memuat data...</TD>
-            </TR>
-          ) : pageRows.length === 0 ? (
-            <TR>
-              <TD colSpan={8} className="empty-row">Tidak ada data pada rentang tanggal ini</TD>
-            </TR>
-          ) : (
-            pageRows.map((row, idx) => (
-              <TR key={row.id}>
-                <TD>{startIndex + idx + 1}</TD>
-                <TD>{row.date}</TD>
-                <TD>{row.name}</TD>
-                <TD>{row.code}</TD>
-                <TD>{row.qty}</TD>
-                <TD>{row.unit}</TD>
-                <TD>{row.receiver}</TD>
-                <TD>{row.dept}</TD>
+            {loading ? (
+              <TR>
+                <TD colSpan={8} className="empty-row">Memuat data...</TD>
               </TR>
-            ))
-          )}
+            ) : pageRows.length === 0 ? (
+              <TR>
+                <TD colSpan={8} className="empty-row">Tidak ada data pada rentang tanggal ini</TD>
+              </TR>
+            ) : (
+              pageRows.map((row, idx) => (
+                <TR key={row.id}>
+                  <TD>{startIndex + idx + 1}</TD>
+                  <TD>{row.date}</TD>
+                  <TD>{row.name}</TD>
+                  <TD>{row.code}</TD>
+                  <TD>{row.qty}</TD>
+                  <TD>{row.unit}</TD>
+                  <TD>{row.receiver}</TD>
+                  <TD>{row.dept}</TD>
+                </TR>
+              ))
+            )}
           </TBody>
         </Table>
 

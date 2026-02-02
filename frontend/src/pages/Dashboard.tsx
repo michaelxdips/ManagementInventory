@@ -15,10 +15,10 @@ type CardItem = {
 };
 
 const cards: CardItem[] = [
-	{ title: 'Kelola ATK', description: 'Tambah stok melalui transaksi barang masuk.', action: 'Lanjutkan', href: '/atk-items', roles: ['admin', 'superadmin'] },
-	{ title: 'Masukkan Request', description: 'Catat permintaan ATK dari unit.', action: 'Lanjutkan', href: '/requests', roles: ['user'] },
+	{ title: 'Masukan ATK', description: 'Tambah stok barang baru ke inventory.', action: 'Tambah', href: '/barang-masuk/create', roles: ['admin', 'superadmin'] },
 	{ title: 'Daftar Barang Masuk', description: 'Lihat riwayat barang yang masuk.', action: 'Lihat', href: '/history-masuk', roles: ['admin', 'superadmin'] },
 	{ title: 'Daftar Barang Keluar', description: 'Lihat riwayat barang yang keluar.', action: 'Lihat', href: '/history-keluar', roles: ['admin', 'superadmin'] },
+	{ title: 'Masukkan Request', description: 'Catat permintaan ATK dari unit.', action: 'Lanjutkan', href: '/requests', roles: ['user'] },
 ];
 
 const ArrowIcon = () => (
@@ -44,7 +44,7 @@ const Dashboard = () => {
 	}, [isUser]);
 
 	const visibleCards = cards.filter((card) => !card.roles || hasRole(card.roles));
-	
+
 	return (
 		<div className="dashboard">
 			<div className="card-grid">
