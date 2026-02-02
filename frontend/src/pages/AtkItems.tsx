@@ -22,6 +22,7 @@ const fallbackItems: Item[] = [
 interface EditFormData {
 	name: string;
 	code: string;
+	quantity: number;
 	unit: string;
 	location: string;
 }
@@ -39,7 +40,7 @@ const AtkItems = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [editingItem, setEditingItem] = useState<Item | null>(null);
-	const [editFormData, setEditFormData] = useState<EditFormData>({ name: '', code: '', unit: '', location: '' });
+	const [editFormData, setEditFormData] = useState<EditFormData>({ name: '', code: '', quantity: 0, unit: '', location: '' });
 	const [editLoading, setEditLoading] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
 	const [showTakeModal, setShowTakeModal] = useState(false);
@@ -110,6 +111,7 @@ const AtkItems = () => {
 		setEditFormData({
 			name: item.name,
 			code: item.code,
+			quantity: item.quantity,
 			unit: item.unit,
 			location: item.location,
 		});
@@ -123,6 +125,10 @@ const AtkItems = () => {
 			setEditError('Nama barang dan satuan tidak boleh kosong');
 			return;
 		}
+		if (Number.isNaN(editFormData.quantity) || editFormData.quantity < 0) {
+			setEditError('Jumlah stok harus 0 atau lebih');
+			return;
+		}
 
 		setEditLoading(true);
 		setEditError(null);
@@ -130,13 +136,14 @@ const AtkItems = () => {
 			await updateItem(editingItem.id, {
 				nama_barang: editFormData.name,
 				kode_barang: editFormData.code,
+				qty: editFormData.quantity,
 				satuan: editFormData.unit,
 				lokasi_simpan: editFormData.location,
 			});
 			// Update local state
 			setItems(items.map(item => 
 				item.id === editingItem.id 
-					? { ...item, name: editFormData.name, code: editFormData.code, unit: editFormData.unit, location: editFormData.location }
+					? { ...item, name: editFormData.name, code: editFormData.code, quantity: editFormData.quantity, unit: editFormData.unit, location: editFormData.location }
 					: item
 			));
 			setShowEditModal(false);
@@ -324,6 +331,18 @@ const AtkItems = () => {
 									value={editFormData.code}
 									onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value })}
 									placeholder="Kode barang"
+								/>
+							</div>
+							<div className="form-group">
+								<label htmlFor="edit-qty">Jumlah *</label>
+								<Input
+									id="edit-qty"
+									type="number"
+									min={0}
+									value={editFormData.quantity}
+									onChange={(e) => setEditFormData({ ...editFormData, quantity: Number(e.target.value) })}
+									placeholder="Jumlah stok"
+									required
 								/>
 							</div>
 							<div className="form-group">
