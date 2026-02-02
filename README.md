@@ -38,14 +38,9 @@ docker-compose up -d --build
 ```
 Aplikasi akan berjalan di container yang terisolasi.
 
-**Cara 3: Manual (Dua Terminal)**
+**Cara 3: Manual (Single Terminal)**
+Paling simpel untuk development cepat.
 ```bash
-# Terminal 1 - Backend
-cd backend
-npm run dev
-
-# Terminal 2 - Frontend
-cd frontend
 npm run dev
 ```
 
