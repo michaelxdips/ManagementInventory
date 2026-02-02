@@ -1,23 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
-import { fetchItems, Item, updateItem, takeItem } from '../api/items.api';
+import { fetchItems, Item, updateItem } from '../api/items.api';
+import { createRequest } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
-
-const fallbackItems: Item[] = [
-	{ id: 1, name: '3M Double Tape Abu-Abu', code: '3M-DTP-GRY', quantity: 0, unit: 'pcs', location: 'Lemari' },
-	{ id: 2, name: 'Amplop Coklat 110x240', code: 'APP-BRW-110', quantity: 2, unit: 'pack', location: 'Lemari' },
-	{ id: 3, name: 'Amplop Coklat 140x270', code: 'APP-BRW-140', quantity: 1001, unit: 'pack', location: 'Lemari' },
-	{ id: 4, name: 'Amplop Polos Coklat', code: 'APP-PLS-BRW', quantity: 190, unit: 'pcs', location: 'Lemari' },
-	{ id: 5, name: 'Amplop Telkom Polos', code: 'APP-TLM-CLS', quantity: 20, unit: 'bungkus', location: 'Lemari' },
-	{ id: 6, name: 'Amplop Telkom Jendela', code: 'APP-TLM-JDL', quantity: 11, unit: 'bundle', location: 'Lemari' },
-	{ id: 7, name: 'Bola Golf', code: 'BAL-GLF', quantity: 3, unit: 'kotak', location: 'Lemari' },
-	{ id: 8, name: 'Ball Liner Biru', code: 'BAL-LNR-BLU', quantity: 109, unit: 'pcs', location: 'Lemari' },
-	{ id: 9, name: 'Ball Liner Hijau', code: 'BAL-LNR-HJU', quantity: 2, unit: 'pcs', location: 'Lemari' },
-	{ id: 10, name: 'Ball Liner Hitam', code: 'BAL-LNR-HTM', quantity: 19, unit: 'pcs', location: 'Lemari' },
-];
 
 interface EditFormData {
 	name: string;
@@ -28,8 +17,12 @@ interface EditFormData {
 }
 
 const AtkItems = () => {
-	const { hasRole } = useAuth();
-	const canOperateStock = hasRole(['admin', 'superadmin']);
+	const navigate = useNavigate();
+	const { hasRole, user } = useAuth();
+	const isSuperadmin = hasRole(['superadmin']);
+	const isAdminOrSuperadmin = hasRole(['admin', 'superadmin']);
+	const isUser = hasRole(['user']);
+
 	const [draftSearch, setDraftSearch] = useState('');
 	const [draftSort, setDraftSort] = useState<'asc' | 'desc'>('asc');
 	const [searchTerm, setSearchTerm] = useState('');
@@ -43,14 +36,14 @@ const AtkItems = () => {
 	const [editFormData, setEditFormData] = useState<EditFormData>({ name: '', code: '', quantity: 0, unit: '', location: '' });
 	const [editLoading, setEditLoading] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
-	const [showTakeModal, setShowTakeModal] = useState(false);
-	const [takeItem_selected, setTakeItem_selected] = useState<Item | null>(null);
-	const [takeQty, setTakeQty] = useState(1);
-	const [takeDate, setTakeDate] = useState('');
-	const [takePenerima, setTakePenerima] = useState('');
-	const [takeLoading, setTakeLoading] = useState(false);
-	const [takeError, setTakeError] = useState<string | null>(null);
-	const [takeMessage, setTakeMessage] = useState<string | null>(null);
+	// Request modal for users
+	const [showRequestModal, setShowRequestModal] = useState(false);
+	const [requestItem, setRequestItem] = useState<Item | null>(null);
+	const [requestQty, setRequestQty] = useState(1);
+	const [requestPenerima, setRequestPenerima] = useState('');
+	const [requestLoading, setRequestLoading] = useState(false);
+	const [requestError, setRequestError] = useState<string | null>(null);
+	const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
 
 	const perPage = 10;
 
@@ -69,8 +62,8 @@ const AtkItems = () => {
 			})
 			.catch(() => {
 				if (!mounted) return;
-				setItems(fallbackItems);
-				setError('Gagal memuat data ATK dari server, menampilkan data mock');
+				setItems([]);
+				setError('Gagal memuat data ATK dari server');
 			})
 			.finally(() => {
 				if (!mounted) return;
@@ -86,7 +79,7 @@ const AtkItems = () => {
 		let result = items;
 		if (term) {
 			result = result.filter((item) =>
-				[item.name, item.code].some((value) => value.toLowerCase().includes(term))
+				[item.name, item.code].some((value) => value?.toLowerCase().includes(term))
 			);
 		}
 		const sorted = [...result].sort((a, b) => {
@@ -107,6 +100,10 @@ const AtkItems = () => {
 	};
 
 	const handleEditClick = (item: Item) => {
+		if (!isSuperadmin) {
+			setEditError('Hanya superadmin yang dapat mengubah stok atau data item');
+			return;
+		}
 		setEditingItem(item);
 		setEditFormData({
 			name: item.name,
@@ -140,9 +137,8 @@ const AtkItems = () => {
 				satuan: editFormData.unit,
 				lokasi_simpan: editFormData.location,
 			});
-			// Update local state
-			setItems(items.map(item => 
-				item.id === editingItem.id 
+			setItems(items.map(item =>
+				item.id === editingItem.id
 					? { ...item, name: editFormData.name, code: editFormData.code, quantity: editFormData.quantity, unit: editFormData.unit, location: editFormData.location }
 					: item
 			));
@@ -155,57 +151,56 @@ const AtkItems = () => {
 		}
 	};
 
-	const handleTakeClick = (item: Item) => {
+	// User: Open request modal instead of direct take
+	const handleRequestClick = (item: Item) => {
 		if (item.quantity <= 0) {
-			setTakeError('Barang ini habis, silahkan buat request');
+			setRequestError('Barang ini habis');
 			return;
 		}
-		setTakeItem_selected(item);
-		setTakeQty(1);
-		const today = new Date().toISOString().split('T')[0];
-		setTakeDate(today);
-		setTakePenerima('');
-		setTakeError(null);
-		setTakeMessage(null);
-		setShowTakeModal(true);
+		setRequestItem(item);
+		setRequestQty(1);
+		setRequestPenerima('');
+		setRequestError(null);
+		setRequestSuccess(null);
+		setShowRequestModal(true);
 	};
 
-	const handleTakeSubmit = async (e: React.FormEvent) => {
+	const handleRequestSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!takeItem_selected || takeQty <= 0) {
-			setTakeError('Jumlah harus lebih dari 0');
+		if (!requestItem || requestQty <= 0) {
+			setRequestError('Jumlah harus lebih dari 0');
 			return;
 		}
-		if (takeQty > takeItem_selected.quantity) {
-			setTakeError(`Stok hanya ${takeItem_selected.quantity}`);
+		if (requestQty > requestItem.quantity) {
+			setRequestError(`Stok hanya ${requestItem.quantity}`);
 			return;
 		}
-		if (!takePenerima.trim()) {
-			setTakeError('Penerima tidak boleh kosong');
+		if (!requestPenerima.trim()) {
+			setRequestError('Penerima tidak boleh kosong');
 			return;
 		}
 
-		setTakeLoading(true);
-		setTakeError(null);
+		setRequestLoading(true);
+		setRequestError(null);
 		try {
-			console.log('[TAKE_SUBMIT] Data yang dikirim:', {
-				itemId: takeItem_selected.id,
-				qty: takeQty,
-				penerima: takePenerima,
+			const today = new Date().toISOString().split('T')[0];
+			await createRequest({
+				date: today,
+				item: requestItem.name,
+				qty: requestQty,
+				unit: requestItem.unit,
+				receiver: requestPenerima,
+				dept: user?.name || 'Unknown',
 			});
-			await takeItem(takeItem_selected.id, takeQty, takePenerima);
-			console.log('[TAKE_SUBMIT] Sukses ambil barang');
-			setTakeMessage(`${takeItem_selected.name} (${takeQty} ${takeItem_selected.unit}) berhasil diambil`);
-			setShowTakeModal(false);
-			setTakeItem_selected(null);
-			// Reload items
-			const updated = await fetchItems();
-			setItems(updated);
+			setRequestSuccess(`Request untuk ${requestItem.name} (${requestQty} ${requestItem.unit}) berhasil diajukan. Menunggu persetujuan admin.`);
+			setTimeout(() => {
+				setShowRequestModal(false);
+				setRequestItem(null);
+			}, 2000);
 		} catch (err: any) {
-			console.error('[TAKE_SUBMIT] Error:', err);
-			setTakeError(err.message || 'Gagal mengambil barang');
+			setRequestError(err.message || 'Gagal membuat request');
 		} finally {
-			setTakeLoading(false);
+			setRequestLoading(false);
 		}
 	};
 
@@ -242,6 +237,16 @@ const AtkItems = () => {
 
 			<div className="items-card">
 				{error && <p className="danger-text" role="alert">{error}</p>}
+				{!isSuperadmin && isAdminOrSuperadmin && (
+					<p style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
+						Hanya superadmin yang dapat mengubah stok. Silakan hubungi superadmin untuk update stok.
+					</p>
+				)}
+				{isUser && (
+					<p style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
+						Klik "Request" untuk mengajukan permintaan barang. Admin akan menyetujui permintaan Anda.
+					</p>
+				)}
 				<Table>
 					<THead>
 						<TR>
@@ -268,25 +273,27 @@ const AtkItems = () => {
 								<TR key={item.id}>
 									<TD>{startIndex + idx + 1}</TD>
 									<TD>{item.name}</TD>
-									<TD>{item.code}</TD>
+									<TD>{item.code || '-'}</TD>
 									<TD>{item.quantity.toLocaleString('id-ID')}</TD>
 									<TD>{item.unit}</TD>
-									<TD>{item.location}</TD>
+									<TD>{item.location || '-'}</TD>
 									<TD>
 										<div className="action-buttons">
-											{canOperateStock ? (
+											{isSuperadmin ? (
 												<Button type="button" variant="ghost" size="sm" onClick={() => handleEditClick(item)}>
 													✏ Edit
 												</Button>
+											) : isAdminOrSuperadmin ? (
+												<span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>-</span>
 											) : (
-												<Button 
-													type="button" 
-													variant={item.quantity > 0 ? 'primary' : 'secondary'} 
-													size="sm" 
-													onClick={() => handleTakeClick(item)}
+												<Button
+													type="button"
+													variant={item.quantity > 0 ? 'secondary' : 'ghost'}
+													size="sm"
+													onClick={() => handleRequestClick(item)}
 													disabled={item.quantity <= 0}
 												>
-													{item.quantity > 0 ? '✓ Ambil' : 'Habis'}
+													{item.quantity > 0 ? '📋 Request' : 'Habis'}
 												</Button>
 											)}
 										</div>
@@ -305,7 +312,7 @@ const AtkItems = () => {
 				</div>
 			</div>
 
-			{/* Edit Modal */}
+			{/* Edit Modal - Superadmin Only */}
 			{showEditModal && (
 				<div className="modal-overlay" onClick={() => setShowEditModal(false)}>
 					<div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -379,76 +386,64 @@ const AtkItems = () => {
 				</div>
 			)}
 
-			{/* Take Item Modal */}
-			{showTakeModal && takeItem_selected && (
-				<div className="modal-overlay" onClick={() => setShowTakeModal(false)}>
-					<div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-						<h2 className="modal-title">Form Ambil ATK</h2>
-						{takeMessage && <p className="success-text">{takeMessage}</p>}
-						{takeError && <p className="danger-text">{takeError}</p>}
-						<form onSubmit={handleTakeSubmit} className="edit-form">
+			{/* Request Modal - User Role */}
+			{showRequestModal && requestItem && (
+				<div className="modal-overlay" onClick={() => setShowRequestModal(false)}>
+					<div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+						<h2 className="modal-title">Request Barang</h2>
+						{requestSuccess && (
+							<div style={{
+								padding: '12px 16px',
+								background: 'var(--success-bg, #d4edda)',
+								color: 'var(--success-text, #155724)',
+								borderRadius: '6px',
+								marginBottom: '16px'
+							}}>
+								{requestSuccess}
+							</div>
+						)}
+						{requestError && <p className="danger-text">{requestError}</p>}
+						<form onSubmit={handleRequestSubmit} className="edit-form">
 							<div className="form-group">
-								<label htmlFor="take-name">Nama Barang</label>
+								<label htmlFor="req-name">Nama Barang</label>
 								<Input
-									id="take-name"
+									id="req-name"
 									type="text"
-									value={takeItem_selected.name}
+									value={requestItem.name}
 									disabled
-									placeholder="Nama barang"
 								/>
 							</div>
 							<div className="form-group">
-								<label htmlFor="take-date">Tanggal</label>
+								<label htmlFor="req-qty">Jumlah Request</label>
 								<Input
-									id="take-date"
-									type="date"
-									value={takeDate}
-									onChange={(e) => setTakeDate(e.target.value)}
-									required
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="take-qty">Jumlah</label>
-								<Input
-									id="take-qty"
+									id="req-qty"
 									type="number"
 									min="1"
-									max={takeItem_selected.quantity}
-									value={takeQty}
-									onChange={(e) => setTakeQty(Math.max(1, parseInt(e.target.value) || 1))}
-									placeholder="Jumlah"
+									max={requestItem.quantity}
+									value={requestQty}
+									onChange={(e) => setRequestQty(Math.max(1, parseInt(e.target.value) || 1))}
 									required
 								/>
 								<p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-									Stok tersedia: {takeItem_selected.quantity}
+									Stok tersedia: {requestItem.quantity} {requestItem.unit}
 								</p>
 							</div>
 							<div className="form-group">
-								<label htmlFor="take-unit">Satuan</label>
+								<label htmlFor="req-penerima">Penerima *</label>
 								<Input
-									id="take-unit"
+									id="req-penerima"
 									type="text"
-									value={takeItem_selected.unit}
-									disabled
-									placeholder="Satuan"
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="take-penerima">Penerima</label>
-								<Input
-									id="take-penerima"
-									type="text"
-									value={takePenerima}
-									onChange={(e) => setTakePenerima(e.target.value)}
+									value={requestPenerima}
+									onChange={(e) => setRequestPenerima(e.target.value)}
 									placeholder="Nama penerima"
 									required
 								/>
 							</div>
 							<div className="form-actions">
-								<Button type="submit" disabled={takeLoading}>
-									{takeLoading ? 'Menyimpan...' : 'Simpan'}
+								<Button type="submit" disabled={requestLoading || !!requestSuccess}>
+									{requestLoading ? 'Mengirim...' : 'Kirim Request'}
 								</Button>
-								<Button type="button" variant="secondary" onClick={() => setShowTakeModal(false)}>
+								<Button type="button" variant="secondary" onClick={() => setShowRequestModal(false)}>
 									Batal
 								</Button>
 							</div>

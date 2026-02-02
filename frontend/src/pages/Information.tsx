@@ -1,24 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
-import { fetchHistoryKeluar, HistoryEntry } from '../api/history.api';
-import useAuth from '../hooks/useAuth';
-
-const fallbackEntries: HistoryEntry[] = [
-  {
-    id: 1,
-    date: '2026-01-21',
-    name: 'Folder One Transparent',
-    code: 'FDR-ONE-TPR',
-    qty: 1,
-    unit: 'pcs',
-    receiver: 'User Name',
-    dept: 'Department',
-  },
-];
+import { fetchHistoryUser, HistoryEntry } from '../api/history.api';
 
 const Information = () => {
-  const { user } = useAuth();
   const [data, setData] = useState<HistoryEntry[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -29,18 +14,16 @@ const Information = () => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetchHistoryKeluar()
+    fetchHistoryUser()
       .then((rows) => {
         if (!mounted) return;
-        // Filter by current user's name (receiver)
-        const userItems = rows.filter((row) => row.receiver === user?.name);
-        setData(userItems);
+        setData(rows);
         setError(null);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
-        setData(fallbackEntries);
-        setError('Gagal memuat data dari server, menampilkan data mock');
+        setData([]);
+        setError(err.message || 'Gagal memuat data dari server');
       })
       .finally(() => {
         if (!mounted) return;
@@ -49,7 +32,7 @@ const Information = () => {
     return () => {
       mounted = false;
     };
-  }, [user?.name]);
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(data.length / perPage));
   const currentPage = Math.min(page, totalPages);
@@ -91,11 +74,11 @@ const Information = () => {
                   <TD>{startIndex + idx + 1}</TD>
                   <TD>{item.date}</TD>
                   <TD>{item.name}</TD>
-                  <TD>{item.code}</TD>
+                  <TD>{item.code || '-'}</TD>
                   <TD>{item.qty}</TD>
                   <TD>{item.unit}</TD>
-                  <TD>{item.receiver}</TD>
-                  <TD>{item.dept}</TD>
+                  <TD>{item.receiver || '-'}</TD>
+                  <TD>{item.dept || '-'}</TD>
                 </TR>
               ))
             )}
@@ -104,7 +87,7 @@ const Information = () => {
 
         <div className="items-footer">
           <span className="items-meta">
-            Menampilkan {startIndex + 1} - {endIndex} dari {data.length} barang
+            Menampilkan {data.length > 0 ? startIndex + 1 : 0} - {endIndex} dari {data.length} barang
           </span>
           <Pagination current={currentPage} total={totalPages} onChange={setPage} />
         </div>

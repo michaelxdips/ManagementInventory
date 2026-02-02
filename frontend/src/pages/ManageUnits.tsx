@@ -4,13 +4,6 @@ import Button from '../components/ui/Button';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { fetchUnits, UnitItem } from '../api/units.api';
 
-const fallbackUnits: UnitItem[] = [
-  { id: 1, name: 'Business Service', username: 'BS' },
-  { id: 2, name: 'Share Service & General Support', username: 'SSGS' },
-  { id: 3, name: 'Government Service', username: 'GS' },
-  { id: 4, name: 'Performance, Risk & QOS', username: 'PRQ' },
-];
-
 const UserPlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
@@ -36,10 +29,10 @@ const ManageUnits = () => {
         setUnits(rows);
         setError(null);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
-        setUnits(fallbackUnits);
-        setError('Gagal memuat data unit dari server, menampilkan data mock');
+        setUnits([]);
+        setError(err.message || 'Gagal memuat data unit dari server');
       })
       .finally(() => {
         if (!mounted) return;
@@ -49,6 +42,7 @@ const ManageUnits = () => {
       mounted = false;
     };
   }, [refreshFlag]);
+
   return (
     <div className="history-page">
       <div className="requests-header section-spacer-sm">
@@ -79,9 +73,9 @@ const ManageUnits = () => {
                 <TD colSpan={3} className="empty-row">Belum ada unit</TD>
               </TR>
             ) : (
-              units.map((row) => (
+              units.map((row, idx) => (
                 <TR key={row.id}>
-                  <TD>{row.id}</TD>
+                  <TD>{idx + 1}</TD>
                   <TD>{row.name}</TD>
                   <TD>{row.username}</TD>
                 </TR>

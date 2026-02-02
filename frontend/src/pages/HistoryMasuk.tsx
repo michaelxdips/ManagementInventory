@@ -2,35 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Button from '../components/ui/Button';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
-import { fetchHistoryMasuk, HistoryEntry } from '../api/history.api';
-
-const baseEntries: Array<Omit<HistoryEntry, 'id'>> = [
-  {
-    date: '2026-01-15',
-    name: 'Snowman Whiteboard Marker Non Permanent Merah',
-    code: 'SNO-NON-RED',
-    qty: 10,
-    unit: 'pcs',
-    pic: 'Super Admin',
-  },
-  { date: '2026-01-02', name: 'Map Bening Dataflex', code: 'MAP-CLS-DTX', qty: 120, unit: 'pcs', pic: 'Admin1' },
-  { date: '2026-01-02', name: 'Folder One Transparent', code: 'FDR-ONE-TPR', qty: 240, unit: 'pcs', pic: 'Admin1' },
-  { date: '2026-01-02', name: 'Amplop Coklat 140x270', code: 'APP-BRW-140', qty: 1000, unit: 'pcs', pic: 'Admin1' },
-  { date: '2026-01-02', name: 'Gunting Besar Joyko', code: 'GTG-BIG-JYO', qty: 5, unit: 'pcs', pic: 'Admin1' },
-  { date: '2026-01-01', name: 'Gunting Kecil', code: 'GK01', qty: 10, unit: 'pcs', pic: 'Admin1' },
-  { date: '2025-12-02', name: 'Baterai AA', code: 'BTR-A2', qty: 70, unit: 'pcs', pic: 'Admin1' },
-  { date: '2025-12-02', name: 'Baterai AA', code: 'BTR-A2', qty: 70, unit: 'pcs', pic: 'Admin1' },
-  { date: '2025-12-01', name: 'kertas paper one A4', code: 'PPR-ONE-A4', qty: 29, unit: 'rim', pic: 'Admin2' },
-  { date: '2025-10-24', name: 'Amplop Telkom Polos', code: 'APP-TLM-CLS', qty: 5, unit: 'bungkus', pic: 'Admin1' },
-];
-
-const fallbackEntries: HistoryEntry[] = Array.from({ length: 300 }, (_, idx) => {
-  const base = baseEntries[idx % baseEntries.length];
-  const date = new Date(base.date);
-  date.setDate(date.getDate() - idx);
-  const iso = date.toISOString().slice(0, 10);
-  return { id: idx + 1, ...base, date: iso };
-});
+import { fetchHistoryMasuk, HistoryEntry, HistoryFilter } from '../api/history.api';
 
 const formatDisplayDate = (iso: string) => iso;
 
@@ -46,15 +18,27 @@ const HistoryMasuk = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [fetching, setFetching] = useState(false);
 
   const perPage = 10;
 
-  useEffect(() => {
-    // Selalu gunakan data mock/fallback
-    setLoading(false);
-    setData(fallbackEntries);
+  const loadData = (filter?: HistoryFilter) => {
+    setLoading(true);
     setFetchError(null);
+    fetchHistoryMasuk(filter)
+      .then((rows) => {
+        setData(rows);
+        setFetchError(null);
+      })
+      .catch(() => {
+        setFetchError('Gagal memuat data dari server');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -105,6 +89,7 @@ const HistoryMasuk = () => {
     setTo('');
     setPage(1);
     setError(null);
+    loadData();
   };
 
   return (
@@ -180,27 +165,27 @@ const HistoryMasuk = () => {
             </TR>
           </THead>
           <TBody>
-          {loading ? (
-            <TR>
-              <TD colSpan={7} className="empty-row">Memuat data...</TD>
-            </TR>
-            ) : pageRows.length === 0 ? (
-            <TR>
-              <TD colSpan={7} className="empty-row">Tidak ada data pada rentang tanggal ini</TD>
-            </TR>
-            ) : (
-            pageRows.map((row, idx) => (
-              <TR key={row.id}>
-                <TD>{startIndex + idx + 1}</TD>
-                <TD>{formatDisplayDate(row.date)}</TD>
-                <TD>{row.name}</TD>
-                <TD>{row.code}</TD>
-                <TD>{row.qty}</TD>
-                <TD>{row.unit}</TD>
-                <TD>{row.pic}</TD>
+            {loading ? (
+              <TR>
+                <TD colSpan={7} className="empty-row">Memuat data...</TD>
               </TR>
-            ))
-          )}
+            ) : pageRows.length === 0 ? (
+              <TR>
+                <TD colSpan={7} className="empty-row">Tidak ada data pada rentang tanggal ini</TD>
+              </TR>
+            ) : (
+              pageRows.map((row, idx) => (
+                <TR key={row.id}>
+                  <TD>{startIndex + idx + 1}</TD>
+                  <TD>{formatDisplayDate(row.date)}</TD>
+                  <TD>{row.name}</TD>
+                  <TD>{row.code}</TD>
+                  <TD>{row.qty}</TD>
+                  <TD>{row.unit}</TD>
+                  <TD>{row.pic}</TD>
+                </TR>
+              ))
+            )}
           </TBody>
         </Table>
 
