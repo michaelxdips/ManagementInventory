@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -16,7 +16,8 @@ export const authenticate = (req, res, next) => {
         const decoded = jwt.verify(token, JWT_SECRET);
 
         // Get user from database
-        const user = db.prepare('SELECT id, name, username, role FROM users WHERE id = ?').get(decoded.userId);
+        const [rows] = await pool.execute('SELECT id, name, username, role FROM users WHERE id = ?', [decoded.userId]);
+        const user = rows[0];
 
         if (!user) {
             return res.status(401).json({ message: 'User tidak ditemukan' });
@@ -45,7 +46,7 @@ export const authorize = (...allowedRoles) => {
 };
 
 // Optional auth - doesn't fail if no token, just sets req.user to null
-export const optionalAuth = (req, res, next) => {
+export const optionalAuth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -57,7 +58,8 @@ export const optionalAuth = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const user = db.prepare('SELECT id, name, username, role FROM users WHERE id = ?').get(decoded.userId);
+        const [rows] = await pool.execute('SELECT id, name, username, role FROM users WHERE id = ?', [decoded.userId]);
+        const user = rows[0];
         req.user = user || null;
     } catch {
         req.user = null;

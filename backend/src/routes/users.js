@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
 
 // PUT /api/users/profile - Update current user profile
-router.put('/profile', authenticate, (req, res) => {
+router.put('/profile', authenticate, async (req, res) => {
     try {
         const { name, username } = req.body;
 
@@ -15,14 +15,15 @@ router.put('/profile', authenticate, (req, res) => {
         }
 
         // Check if username is taken by another user
-        const existing = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, req.user.id);
-        if (existing) {
+        const [existingRows] = await pool.query('SELECT id FROM users WHERE username = ? AND id != ?', [username, req.user.id]);
+        if (existingRows.length > 0) {
             return res.status(400).json({ message: 'Username sudah digunakan' });
         }
 
-        db.prepare('UPDATE users SET name = ?, username = ? WHERE id = ?').run(name, username, req.user.id);
+        await pool.execute('UPDATE users SET name = ?, username = ? WHERE id = ?', [name, username, req.user.id]);
 
-        const updated = db.prepare('SELECT id, name, username, role FROM users WHERE id = ?').get(req.user.id);
+        const [updatedRows] = await pool.query('SELECT id, name, username, role FROM users WHERE id = ?', [req.user.id]);
+        const updated = updatedRows[0];
 
         res.json({
             id: String(updated.id),
@@ -37,7 +38,7 @@ router.put('/profile', authenticate, (req, res) => {
 });
 
 // PUT /api/users/password - Update current user password
-router.put('/password', authenticate, (req, res) => {
+router.put('/password', authenticate, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 
@@ -50,7 +51,8 @@ router.put('/password', authenticate, (req, res) => {
         }
 
         // Verify current password
-        const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+        const [userRows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+        const user = userRows[0];
         const isValid = bcrypt.compareSync(currentPassword, user.password_hash);
         if (!isValid) {
             return res.status(400).json({ message: 'Password lama salah' });
@@ -58,7 +60,7 @@ router.put('/password', authenticate, (req, res) => {
 
         // Update password
         const newHash = bcrypt.hashSync(newPassword, 10);
-        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+        await pool.execute('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, req.user.id]);
 
         res.json({ message: 'Password berhasil diperbarui' });
     } catch (error) {
@@ -68,18 +70,18 @@ router.put('/password', authenticate, (req, res) => {
 });
 
 // DELETE /api/users/account - Delete current user account
-router.delete('/account', authenticate, (req, res) => {
+router.delete('/account', authenticate, async (req, res) => {
     try {
         // Don't allow deleting superadmin accounts easily
         if (req.user.role === 'superadmin') {
             // Check if this is the last superadmin
-            const superadminCount = db.prepare('SELECT COUNT(*) as count FROM users WHERE role = ?').get('superadmin');
-            if (superadminCount.count <= 1) {
+            const [countRows] = await pool.query('SELECT COUNT(*) as count FROM users WHERE role = ?', ['superadmin']);
+            if (countRows[0].count <= 1) {
                 return res.status(400).json({ message: 'Tidak dapat menghapus superadmin terakhir' });
             }
         }
 
-        db.prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
+        await pool.execute('DELETE FROM users WHERE id = ?', [req.user.id]);
 
         res.status(204).send();
     } catch (error) {

@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET /api/barang-masuk - Get barang masuk history (same as history/masuk)
-router.get('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
+router.get('/', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
     try {
         const { from, to } = req.query;
 
@@ -38,7 +38,7 @@ router.get('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
 
         query += ' ORDER BY date DESC, id DESC';
 
-        const entries = db.prepare(query).all(...params);
+        const [entries] = await pool.query(query, params);
         res.json(entries);
     } catch (error) {
         console.error('Get barang masuk error:', error);
@@ -47,49 +47,57 @@ router.get('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
 });
 
 // POST /api/barang-masuk - Add new stock (Barang Masuk)
-router.post('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
+router.post('/', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
+    const connection = await pool.getConnection(); // Use transaction
     try {
         const { nama_barang, kode_barang, qty, satuan, lokasi_simpan, tanggal } = req.body;
 
         if (!nama_barang || !qty || !satuan) {
+            connection.release();
             return res.status(400).json({ message: 'Nama barang, jumlah, dan satuan wajib diisi' });
         }
 
         if (qty <= 0) {
+            connection.release();
             return res.status(400).json({ message: 'Jumlah harus lebih dari 0' });
         }
+
+        await connection.beginTransaction();
 
         const date = tanggal || new Date().toISOString().split('T')[0];
 
         // Find or create item in inventory
-        let item = db.prepare('SELECT * FROM atk_items WHERE LOWER(nama_barang) = LOWER(?)').get(nama_barang);
+        // Use FOR UPDATE to lock row if exists
+        const [itemRows] = await connection.query('SELECT * FROM atk_items WHERE LOWER(nama_barang) = LOWER(?) FOR UPDATE', [nama_barang]);
+        let item = itemRows[0];
+        let itemId;
 
         if (item) {
             // Update existing item - ADD stock
-            db.prepare(`
+            await connection.execute(`
                 UPDATE atk_items 
                 SET qty = qty + ?, 
                     kode_barang = COALESCE(?, kode_barang), 
                     lokasi_simpan = COALESCE(?, lokasi_simpan)
                 WHERE id = ?
-            `).run(qty, kode_barang, lokasi_simpan, item.id);
-
-            // barang_kosong is derived from atk_items WHERE qty=0
-            // No maintenance needed
+            `, [qty, kode_barang, lokasi_simpan, item.id]);
+            itemId = item.id;
         } else {
             // Create new item
-            const result = db.prepare(`
+            const [result] = await connection.execute(`
                 INSERT INTO atk_items (nama_barang, kode_barang, qty, satuan, lokasi_simpan)
                 VALUES (?, ?, ?, ?, ?)
-            `).run(nama_barang, kode_barang || null, qty, satuan, lokasi_simpan || null);
-            item = { id: result.lastInsertRowid };
+            `, [nama_barang, kode_barang || null, qty, satuan, lokasi_simpan || null]);
+            itemId = result.insertId;
         }
 
         // Record barang masuk
-        db.prepare(`
+        await connection.execute(`
             INSERT INTO barang_masuk (date, atk_item_id, nama_barang, kode_barang, qty, satuan, lokasi_simpan, pic)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(date, item.id, nama_barang, kode_barang || null, qty, satuan, lokasi_simpan || null, req.user.name);
+        `, [date, itemId, nama_barang, kode_barang || null, qty, satuan, lokasi_simpan || null, req.user.name]);
+
+        await connection.commit();
 
         res.status(201).json({
             message: `Barang masuk berhasil dicatat: ${nama_barang} (+${qty} ${satuan})`,
@@ -104,8 +112,11 @@ router.post('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
             }
         });
     } catch (error) {
+        await connection.rollback();
         console.error('Create barang masuk error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        connection.release();
     }
 });
 

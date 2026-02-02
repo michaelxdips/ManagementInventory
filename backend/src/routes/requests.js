@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET /api/requests - List requests
-router.get('/', authenticate, (req, res) => {
+router.get('/', authenticate, async (req, res) => {
     try {
         let query = `
       SELECT 
@@ -29,7 +29,7 @@ router.get('/', authenticate, (req, res) => {
 
         query += ' ORDER BY created_at DESC';
 
-        const requests = db.prepare(query).all(...params);
+        const [requests] = await pool.query(query, params);
         res.json(requests);
     } catch (error) {
         console.error('Get requests error:', error);
@@ -38,7 +38,7 @@ router.get('/', authenticate, (req, res) => {
 });
 
 // POST /api/requests - Create new request
-router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), (req, res) => {
+router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (req, res) => {
     try {
         const { date, item, qty, unit, receiver, dept } = req.body;
 
@@ -46,14 +46,13 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), (req, r
             return res.status(400).json({ message: 'Semua field wajib diisi' });
         }
 
-        const result = db.prepare(`
+        const [result] = await pool.execute(`
       INSERT INTO requests (date, item, qty, unit, receiver, dept, status, user_id)
       VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?)
-    `).run(date, item, qty, unit, receiver, dept, req.user.id);
+    `, [date, item, qty, unit, receiver, dept, req.user.id]);
 
-        const newRequest = db.prepare('SELECT * FROM requests WHERE id = ?').get(result.lastInsertRowid);
-
-        res.status(201).json(newRequest);
+        const [newRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [result.insertId]);
+        res.status(201).json(newRows[0]);
     } catch (error) {
         console.error('Create request error:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -61,7 +60,7 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), (req, r
 });
 
 // GET /api/requests/:id - Get single request
-router.get('/:id', authenticate, (req, res) => {
+router.get('/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -74,7 +73,8 @@ router.get('/:id', authenticate, (req, res) => {
             params.push(req.user.id);
         }
 
-        const request = db.prepare(query).get(...params);
+        const [rows] = await pool.query(query, params);
+        const request = rows[0];
 
         if (!request) {
             return res.status(404).json({ message: 'Request tidak ditemukan' });

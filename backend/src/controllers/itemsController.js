@@ -1,8 +1,8 @@
-import db from '../config/db.js';
+import pool from '../config/db.js';
 
-export const getAllItems = (req, res) => {
+export const getAllItems = async (req, res) => {
     try {
-        const items = db.prepare('SELECT * FROM atk_items ORDER BY nama_barang ASC').all();
+        const [items] = await pool.query('SELECT * FROM atk_items ORDER BY nama_barang ASC');
         res.json(items);
     } catch (error) {
         console.error('Get items error:', error);
@@ -10,10 +10,11 @@ export const getAllItems = (req, res) => {
     }
 };
 
-export const getItemById = (req, res) => {
+export const getItemById = async (req, res) => {
     try {
         const { id } = req.params;
-        const item = db.prepare('SELECT * FROM atk_items WHERE id = ?').get(id);
+        const [rows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [id]);
+        const item = rows[0];
 
         if (!item) {
             return res.status(404).json({ message: 'Item tidak ditemukan' });
@@ -26,13 +27,15 @@ export const getItemById = (req, res) => {
     }
 };
 
-export const updateItem = (req, res) => {
+export const updateItem = async (req, res) => {
     try {
         const { id } = req.params;
         const { nama_barang, kode_barang, qty, satuan, lokasi_simpan } = req.body;
 
         // Check if item exists
-        const existing = db.prepare('SELECT * FROM atk_items WHERE id = ?').get(id);
+        const [rows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [id]);
+        const existing = rows[0];
+
         if (!existing) {
             return res.status(404).json({ message: 'Item tidak ditemukan' });
         }
@@ -44,11 +47,13 @@ export const updateItem = (req, res) => {
 
         // FIX #2: Lock edit qty saat ada pending request
         if (typeof qty === 'number' && qty !== existing.qty) {
-            const pendingCount = db.prepare(`
+            const [countRows] = await pool.query(`
                 SELECT COUNT(*) as count 
                 FROM requests 
                 WHERE LOWER(item) = LOWER(?) AND status = 'PENDING'
-            `).get(existing.nama_barang);
+            `, [existing.nama_barang]);
+
+            const pendingCount = countRows[0];
 
             if (pendingCount && pendingCount.count > 0) {
                 return res.status(409).json({
@@ -58,23 +63,22 @@ export const updateItem = (req, res) => {
         }
 
         // Update item
-        const stmt = db.prepare(`
+        await pool.execute(`
             UPDATE atk_items 
             SET nama_barang = ?, kode_barang = ?, qty = ?, satuan = ?, lokasi_simpan = ?
             WHERE id = ?
-        `);
-        stmt.run(nama_barang, kode_barang, qty, satuan, lokasi_simpan, id);
+        `, [nama_barang, kode_barang, qty, satuan, lokasi_simpan, id]);
 
         // Get updated item
-        const updated = db.prepare('SELECT * FROM atk_items WHERE id = ?').get(id);
-        res.json(updated);
+        const [updatedRows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [id]);
+        res.json(updatedRows[0]);
     } catch (error) {
         console.error('Update item error:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
 
-export const createItem = (req, res) => {
+export const createItem = async (req, res) => {
     try {
         const { nama_barang, kode_barang, qty, satuan, lokasi_simpan } = req.body;
 
@@ -85,13 +89,13 @@ export const createItem = (req, res) => {
         // FIX #1: Prevent negative stock on create
         const safeQty = (typeof qty === 'number' && qty >= 0) ? qty : 0;
 
-        const result = db.prepare(`
+        const [result] = await pool.execute(`
             INSERT INTO atk_items (nama_barang, kode_barang, qty, satuan, lokasi_simpan)
             VALUES (?, ?, ?, ?, ?)
-        `).run(nama_barang, kode_barang || null, safeQty, satuan, lokasi_simpan || null);
+        `, [nama_barang, kode_barang || null, safeQty, satuan, lokasi_simpan || null]);
 
-        const newItem = db.prepare('SELECT * FROM atk_items WHERE id = ?').get(result.lastInsertRowid);
-        res.status(201).json(newItem);
+        const [newRows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [result.insertId]);
+        res.status(201).json(newRows[0]);
     } catch (error) {
         console.error('Create item error:', error);
         res.status(500).json({ message: 'Internal server error' });

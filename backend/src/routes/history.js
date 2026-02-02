@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET /api/history/masuk - Get barang masuk history
-router.get('/masuk', authenticate, authorize('admin', 'superadmin'), (req, res) => {
+router.get('/masuk', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
     try {
         const { from, to } = req.query;
 
@@ -37,7 +37,7 @@ router.get('/masuk', authenticate, authorize('admin', 'superadmin'), (req, res) 
 
         query += ' ORDER BY date DESC, id DESC';
 
-        const entries = db.prepare(query).all(...params);
+        const [entries] = await pool.query(query, params);
         res.json(entries);
     } catch (error) {
         console.error('Get history masuk error:', error);
@@ -46,7 +46,7 @@ router.get('/masuk', authenticate, authorize('admin', 'superadmin'), (req, res) 
 });
 
 // GET /api/history/keluar - Get barang keluar history (from approved requests)
-router.get('/keluar', authenticate, authorize('admin', 'superadmin'), (req, res) => {
+router.get('/keluar', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
     try {
         const { from, to } = req.query;
 
@@ -79,7 +79,7 @@ router.get('/keluar', authenticate, authorize('admin', 'superadmin'), (req, res)
 
         query += ' ORDER BY date DESC, id DESC';
 
-        const entries = db.prepare(query).all(...params);
+        const [entries] = await pool.query(query, params);
         res.json(entries);
     } catch (error) {
         console.error('Get history keluar error:', error);
@@ -88,7 +88,7 @@ router.get('/keluar', authenticate, authorize('admin', 'superadmin'), (req, res)
 });
 
 // GET /api/history/user - Get user's own history (for Information page)
-router.get('/user', authenticate, (req, res) => {
+router.get('/user', authenticate, async (req, res) => {
     try {
         const { from, to } = req.query;
 
@@ -118,7 +118,7 @@ router.get('/user', authenticate, (req, res) => {
 
         query += ' ORDER BY bk.date DESC, bk.id DESC';
 
-        const entries = db.prepare(query).all(...params);
+        const [entries] = await pool.query(query, params);
         res.json(entries);
     } catch (error) {
         console.error('Get user history error:', error);

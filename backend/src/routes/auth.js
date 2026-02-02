@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const { username, password, role } = req.body;
 
@@ -27,7 +27,8 @@ router.post('/login', (req, res) => {
             params.push(role);
         }
 
-        const user = db.prepare(query).get(...params);
+        const [rows] = await pool.execute(query, params);
+        const user = rows[0];
 
         if (!user) {
             return res.status(401).json({ message: 'Username atau password salah' });

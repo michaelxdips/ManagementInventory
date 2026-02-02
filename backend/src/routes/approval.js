@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import db from '../config/db.js';
+import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET /api/approval - List PENDING requests only (for admin action)
-router.get('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
+router.get('/', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
     try {
-        const requests = db.prepare(`
+        const [requests] = await pool.query(`
       SELECT 
         r.id,
         r.date,
@@ -22,7 +22,7 @@ router.get('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
       LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
       WHERE r.status = 'PENDING'
       ORDER BY r.created_at DESC
-    `).all();
+    `);
 
         res.json(requests);
     } catch (error) {
@@ -32,84 +32,68 @@ router.get('/', authenticate, authorize('admin', 'superadmin'), (req, res) => {
 });
 
 // POST /api/approval/:id/approve - Approve request, REDUCE stock, record barang keluar
-// FIX #3: Hardened approval logic with double/concurrent prevention
-// FIX #4: Manual rollback due to SQLite transaction limitation
-router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), (req, res) => {
-    // Variables for manual rollback
-    let prevQty = null;
-    let stockUpdated = false;
-    let itemId = null;
-
+router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
+    const connection = await pool.getConnection();
     try {
         const { id } = req.params;
 
-        // Step 1: Fetch request by ID
-        const request = db.prepare('SELECT * FROM requests WHERE id = ?').get(id);
+        await connection.beginTransaction();
+
+        // Step 1: Fetch request by ID (FOR UPDATE to lock row)
+        const [reqRows] = await connection.query('SELECT * FROM requests WHERE id = ? FOR UPDATE', [id]);
+        const request = reqRows[0];
+
         if (!request) {
+            await connection.rollback();
             return res.status(404).json({ message: 'Request tidak ditemukan' });
         }
 
-        // Step 2: FIX #3 - STRICT status check to prevent double approval
-        // If status is not PENDING, this request was already processed
+        // Step 2: STRICT status check to prevent double approval
         if (request.status !== 'PENDING') {
+            await connection.rollback();
             return res.status(400).json({ message: 'Request sudah diproses sebelumnya' });
         }
 
         // Step 3: Find the item in inventory
-        const item = db.prepare('SELECT * FROM atk_items WHERE LOWER(nama_barang) = LOWER(?)').get(request.item);
+        const [itemRows] = await connection.query('SELECT * FROM atk_items WHERE LOWER(nama_barang) = LOWER(?) FOR UPDATE', [request.item]);
+        const item = itemRows[0];
+
         if (!item) {
+            await connection.rollback();
             return res.status(400).json({ message: `Barang "${request.item}" tidak ditemukan di inventory` });
         }
 
-        // Step 4: FIX #5 - Re-validate stock availability (backend validation hardening)
-        // Never trust frontend - always check current stock
+        // Step 4: Re-validate stock availability
         if (item.qty < request.qty) {
+            await connection.rollback();
             return res.status(400).json({
                 message: `Stok tidak cukup. Tersedia: ${item.qty}, Diminta: ${request.qty}`
             });
         }
 
-        // FIX #1: Ensure resulting stock is not negative
         const newQty = item.qty - request.qty;
         if (newQty < 0) {
+            await connection.rollback();
             return res.status(400).json({ message: 'Quantity cannot be negative' });
         }
 
-        // FIX #4: Save previous values for manual rollback
-        // Manual rollback due to SQLite transaction limitation
-        prevQty = item.qty;
-        itemId = item.id;
-
-        // Step 5: Update request status to APPROVED FIRST (prevents concurrent approval)
-        db.prepare('UPDATE requests SET status = ? WHERE id = ?').run('APPROVED', id);
+        // Step 5: Update request status to APPROVED
+        await connection.execute('UPDATE requests SET status = ? WHERE id = ?', ['APPROVED', id]);
 
         // Step 6: REDUCE stock
-        db.prepare('UPDATE atk_items SET qty = ? WHERE id = ?').run(newQty, itemId);
-        stockUpdated = true;
+        await connection.execute('UPDATE atk_items SET qty = ? WHERE id = ?', [newQty, item.id]);
 
         // Step 7: Record barang keluar
         const today = new Date().toISOString().split('T')[0];
-        try {
-            db.prepare(`
-                INSERT INTO barang_keluar (date, atk_item_id, nama_barang, kode_barang, qty, satuan, penerima, dept)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `).run(today, item.id, item.nama_barang, item.kode_barang, request.qty, item.satuan, request.receiver, request.dept);
-        } catch (insertError) {
-            // FIX #4: Manual rollback due to SQLite transaction limitation
-            // If insert fails, restore stock to previous value
-            console.error('Insert barang_keluar failed, rolling back:', insertError);
-            if (stockUpdated && itemId !== null && prevQty !== null) {
-                db.prepare('UPDATE atk_items SET qty = ? WHERE id = ?').run(prevQty, itemId);
-            }
-            db.prepare('UPDATE requests SET status = ? WHERE id = ?').run('PENDING', id);
-            return res.status(500).json({ message: 'Gagal mencatat barang keluar, perubahan dibatalkan' });
-        }
+        await connection.execute(`
+            INSERT INTO barang_keluar (date, atk_item_id, nama_barang, kode_barang, qty, satuan, penerima, dept)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [today, item.id, item.nama_barang, item.kode_barang, request.qty, item.satuan, request.receiver, request.dept]);
 
-        // barang_kosong is derived from atk_items WHERE qty=0
-        // No separate table insert needed (single source of truth)
+        await connection.commit();
 
         // Return updated request
-        const updated = db.prepare(`
+        const [updatedRows] = await pool.query(`
             SELECT 
                 r.id,
                 r.date,
@@ -123,49 +107,42 @@ router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), (req
             FROM requests r
             LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
             WHERE r.id = ?
-        `).get(id);
+        `, [id]);
 
         res.json({
-            ...updated,
+            ...updatedRows[0],
             message: `Permintaan disetujui. Stok ${item.nama_barang} berkurang ${request.qty} (sisa: ${newQty})`
         });
     } catch (error) {
+        await connection.rollback();
         console.error('Approve request error:', error);
-
-        // FIX #4: Manual rollback due to SQLite transaction limitation
-        // Attempt to restore state if error occurred after stock update
-        if (stockUpdated && itemId !== null && prevQty !== null) {
-            try {
-                db.prepare('UPDATE atk_items SET qty = ? WHERE id = ?').run(prevQty, itemId);
-                db.prepare('UPDATE requests SET status = ? WHERE id = ?').run('PENDING', req.params.id);
-            } catch (rollbackError) {
-                console.error('Rollback failed:', rollbackError);
-            }
-        }
-
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        connection.release();
     }
 });
 
 // POST /api/approval/:id/reject - Reject a request (no stock change)
-router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), (req, res) => {
+router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
     try {
         const { id } = req.params;
 
-        const request = db.prepare('SELECT * FROM requests WHERE id = ?').get(id);
+        // Check request first
+        const [reqRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [id]);
+        const request = reqRows[0];
+
         if (!request) {
             return res.status(404).json({ message: 'Request tidak ditemukan' });
         }
 
-        // FIX #3: Strict status check - prevent double rejection
         if (request.status !== 'PENDING') {
             return res.status(400).json({ message: 'Request sudah diproses sebelumnya' });
         }
 
         // Update status to REJECTED (no stock change)
-        db.prepare('UPDATE requests SET status = ? WHERE id = ?').run('REJECTED', id);
+        await pool.execute('UPDATE requests SET status = ? WHERE id = ?', ['REJECTED', id]);
 
-        const updated = db.prepare(`
+        const [updatedRows] = await pool.query(`
             SELECT 
                 r.id,
                 r.date,
@@ -179,9 +156,9 @@ router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), (req,
             FROM requests r
             LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
             WHERE r.id = ?
-        `).get(id);
+        `, [id]);
 
-        res.json(updated);
+        res.json(updatedRows[0]);
     } catch (error) {
         console.error('Reject request error:', error);
         res.status(500).json({ message: 'Internal server error' });
