@@ -3,7 +3,8 @@ const db = require('../db/mysql');
 async function listKosong() {
   const sql = `
     SELECT id, nama, kode_barang, lokasi_simpan
-    FROM barang_kosong
+    FROM atk_items
+    WHERE stok = 0
     ORDER BY nama ASC
   `;
   const [rows] = await db.execute(sql);

@@ -86,7 +86,7 @@ const Login = () => {
 				</button>
 			</form>
 
-			<p className="auth-footer">PKL Management Inventory</p>
+			<p className="auth-footer">Management Inventory</p>
 		</section>
 	);
 };

@@ -12,6 +12,7 @@ export type Item = {
 export type UpdateItemPayload = {
   nama_barang: string;
   kode_barang: string;
+  qty: number;
   satuan: string;
   lokasi_simpan: string;
 };

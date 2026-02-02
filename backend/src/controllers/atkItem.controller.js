@@ -107,11 +107,11 @@ async function update(req, res) {
       });
     }
 
-    // stok tidak boleh diubah lewat edit item
+    const nextQty = Number.isFinite(Number(qty)) ? Math.max(0, Number(qty)) : existing.stok;
     const affected = await updateItem(id, {
       nama: nama_barang,
       satuan,
-      stok: existing.stok,
+      stok: nextQty,
       kode_barang,
       lokasi_simpan,
     });
@@ -123,7 +123,7 @@ async function update(req, res) {
     }
 
     res.json({
-      message: "Item berhasil diperbarui (stok tidak diubah di sini)",
+      message: "Item berhasil diperbarui",
     });
   } catch (error) {
     console.error(error);

@@ -43,9 +43,12 @@ exports.approve = async (req, res) => {
 
     // Only update status to approved, don't process barang masuk/keluar yet
     console.log(`[APPROVE] Updating approval status...`);
-    await setStatus({ id, status: 'approved', decided_by: req.user?.id || null }, conn);
-    console.log(`[APPROVE] Updating request status...`);
-    await updateStatus(record.request_id, 'approved', conn);
+    const approvalAffected = await setStatus({ id, status: 'approved', decided_by: req.user?.id || null }, conn);
+    console.log(`[APPROVE] Approval status updated. Rows affected: ${approvalAffected}`);
+    
+    console.log(`[APPROVE] Updating request status for request_id: ${record.request_id}...`);
+    const requestAffected = await updateStatus(record.request_id, 'approved', conn);
+    console.log(`[APPROVE] Request status updated. Rows affected: ${requestAffected}`);
 
     await conn.commit();
     console.log(`[APPROVE] Transaction committed successfully`);
