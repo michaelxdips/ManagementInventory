@@ -24,6 +24,17 @@ cd ../frontend
 npm install
 ```
 
+### Development Tools
+
+Project ini dilengkapi dengan Linter & Formatter.
+```bash
+# Cek kerapian kode
+npm run lint
+
+# Rapikan otomatis
+npm run format
+```
+
 ### Menjalankan Aplikasi
 
 **Cara 1: Windows Script (Direkomendasikan untk Dev)**
@@ -97,8 +108,9 @@ node src/seed.js
 ManagementInventory/
 ├── backend/                 # Express.js API
 │   ├── src/
-│   │   ├── config/         # Database config (SQLite)
-│   │   ├── middleware/     # Auth middleware (JWT)
+│   │   ├── config/         # Database & Swagger config
+│   │   ├── controllers/    # Business Logic
+│   │   ├── middleware/     # Auth & Security middleware
 │   │   ├── routes/         # API routes
 │   │   └── index.js        # Entry point
 │   └── package.json
@@ -118,6 +130,10 @@ ManagementInventory/
 ---
 
 ## 🔌 API Endpoints
+Documentasi lengkap API tersedia via Swagger UI di:
+`http://localhost:3000/api-docs`
+
+### Authentication
 
 ### Authentication
 | Method | Endpoint | Access |
@@ -178,6 +194,8 @@ ManagementInventory/
 - ✅ Negative stock prevention
 - ✅ Double approval prevention
 - ✅ Pending request lock on edit
+- ✅ **Helmet Protection** (Secure Headers)
+- ✅ **Rate Limiting** (DDoS Protection)
 
 ---
 
