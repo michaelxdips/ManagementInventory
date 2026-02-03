@@ -105,9 +105,9 @@ router.get('/user', authenticate, async (req, res) => {
         r.status
       FROM requests r
       LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
-      WHERE r.dept = ? AND r.status IN ('APPROVED', 'REJECTED')
+      WHERE r.user_id = ? AND r.status IN ('APPROVED', 'REJECTED')
     `;
-        const params = [req.user.name];
+        const params = [req.user.id];
 
         if (from) {
             query += ' AND r.date >= ?';

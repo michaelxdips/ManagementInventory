@@ -1,42 +1,70 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
+import useAuth from '../hooks/useAuth';
+import Modal from '../components/ui/Modal';
+import { updateProfile, deleteAccount } from '../api/users.api';
 
 const ProfileSettings = () => {
-	const [name, setName] = useState('Super Admin');
-	const [username, setUsername] = useState('SuperAdmin1');
+	const { user, updateUser, logout } = useAuth();
+	const navigate = useNavigate();
+
+	const [name, setName] = useState('');
+	const [username, setUsername] = useState('');
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [showConfirm, setShowConfirm] = useState(false);
 
-	const handleSave = () => {
+	// Initialize state from auth context
+	useEffect(() => {
+		if (user) {
+			setName(user.name);
+			setUsername(user.username);
+		}
+	}, [user]);
+
+	const handleSave = async () => {
 		if (!name.trim() || !username.trim()) {
 			setError('Name dan Username wajib diisi');
 			setMessage(null);
 			return;
 		}
+
 		setError(null);
+		setMessage(null);
 		setSaving(true);
-		setTimeout(() => {
-			setSaving(false);
+
+		try {
+			const updatedUser = await updateProfile({ name, username });
+			updateUser(updatedUser); // Update context instantly
 			setMessage('Profil berhasil disimpan');
-		}, 400);
+		} catch (err: any) {
+			setError(err.response?.data?.message || 'Gagal menyimpan profil');
+		} finally {
+			setSaving(false);
+		}
 	};
 
 	const handleDelete = () => {
 		setShowConfirm(true);
 	};
 
-	const confirmDelete = () => {
-		setShowConfirm(false);
+	const confirmDelete = async () => {
+		// setShowConfirm(false); // Don't close immediately to show state
 		setMessage(null);
 		setError(null);
 		setSaving(true);
-		setTimeout(() => {
+
+		try {
+			await deleteAccount();
+			await logout(); // Clear context and redirect
+			navigate('/login');
+		} catch (err: any) {
+			setError(err.response?.data?.message || 'Gagal menghapus akun');
 			setSaving(false);
-			setMessage('Akun berhasil dihapus (simulasi)');
-		}, 500);
+			setShowConfirm(false);
+		}
 	};
 
 	const cancelDelete = () => {
@@ -97,9 +125,11 @@ const ProfileSettings = () => {
 					</div>
 
 					<div className="settings-actions">
-						{message && <p className="items-meta" role="status">{message}</p>}
+						{message && <p className="items-meta" style={{ color: 'var(--success-text, #155724)' }} role="status">{message}</p>}
 						{error && <p className="danger-text" role="alert">{error}</p>}
-						<Button type="button" variant="primary" onClick={handleSave} disabled={saving}>Save</Button>
+						<Button type="button" variant="primary" onClick={handleSave} disabled={saving}>
+							{saving ? 'Saving...' : 'Save'}
+						</Button>
 					</div>
 				</div>
 
@@ -115,19 +145,27 @@ const ProfileSettings = () => {
 				</div>
 			</div>
 
-			{showConfirm && (
-				<div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-					<div className="modal-card">
-						<p className="modal-kicker">Konfirmasi</p>
-						<h2 id="confirm-title" className="modal-title">Hapus akun?</h2>
-						<p className="modal-text">Tindakan ini tidak dapat dibatalkan. Semua data akun akan dihapus.</p>
-						<div className="modal-actions">
-							<Button type="button" variant="ghost" onClick={cancelDelete}>Batal</Button>
-							<Button type="button" variant="danger" onClick={confirmDelete} disabled={saving}>Hapus</Button>
-						</div>
+			{/* Delete Confirmation Modal */}
+			<Modal
+				isOpen={showConfirm}
+				onClose={cancelDelete}
+				title="Hapus akun?"
+				footer={
+					<div className="modal-actions">
+						<Button type="button" variant="secondary" onClick={cancelDelete}>Batal</Button>
+						<Button type="button" variant="danger" onClick={confirmDelete} disabled={saving}>
+							{saving ? 'Menghapus...' : 'Hapus'}
+						</Button>
 					</div>
+				}
+			>
+				<div style={{ marginBottom: '16px' }}>
+					<p className="modal-kicker">Konfirmasi</p>
+					<p style={{ color: 'var(--muted)', fontSize: '14px', margin: '8px 0' }}>
+						Tindakan ini tidak dapat dibatalkan. Semua data akun akan dihapus.
+					</p>
 				</div>
-			)}
+			</Modal>
 		</div>
 	);
 };

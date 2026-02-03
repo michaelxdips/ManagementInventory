@@ -8,6 +8,7 @@ export type AuthContextValue = {
   login: (payload: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (roles: Role[]) => boolean;
+  updateUser: (user: AuthUser) => void;
 };
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -65,7 +66,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return roles.includes(user.role);
   };
 
-  const value = useMemo(() => ({ user, loading: loading && !authChecked, login, logout, hasRole }), [user, loading, authChecked]);
+  const updateUser = (updatedUser: AuthUser) => {
+    setUser(updatedUser);
+  };
+
+  const value = useMemo(() => ({ user, loading: loading && !authChecked, login, logout, hasRole, updateUser }), [user, loading, authChecked]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

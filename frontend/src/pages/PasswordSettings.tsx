@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
+import { updatePassword } from '../api/users.api';
 
 const PasswordSettings = () => {
 	const [currentPassword, setCurrentPassword] = useState('');
@@ -10,7 +11,7 @@ const PasswordSettings = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		if (!currentPassword || !newPassword || !confirmPassword) {
 			setError('Semua kolom wajib diisi');
 			setMessage(null);
@@ -26,12 +27,23 @@ const PasswordSettings = () => {
 			setMessage(null);
 			return;
 		}
+
 		setError(null);
+		setMessage(null);
 		setSaving(true);
-		setTimeout(() => {
-			setSaving(false);
+
+		try {
+			await updatePassword({ currentPassword, newPassword });
 			setMessage('Password berhasil diperbarui');
-		}, 400);
+			// Reset form
+			setCurrentPassword('');
+			setNewPassword('');
+			setConfirmPassword('');
+		} catch (err: any) {
+			setError(err.response?.data?.message || 'Gagal memperbarui password');
+		} finally {
+			setSaving(false);
+		}
 	};
 
 	return (
