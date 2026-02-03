@@ -87,36 +87,38 @@ router.get('/keluar', authenticate, authorize('admin', 'superadmin'), async (req
     }
 });
 
-// GET /api/history/user - Get user's own history (for Information page)
+// GET /api/history/user - Get user's own request history (APPROVED + REJECTED)
 router.get('/user', authenticate, async (req, res) => {
     try {
         const { from, to } = req.query;
 
         let query = `
       SELECT 
-        bk.id,
-        bk.date,
-        bk.nama_barang as name,
-        bk.kode_barang as code,
-        bk.qty,
-        bk.satuan as unit,
-        bk.penerima as receiver,
-        bk.dept
-      FROM barang_keluar bk
-      WHERE bk.dept = ?
+        r.id,
+        r.date,
+        r.item as name,
+        COALESCE(a.kode_barang, '') as code,
+        r.qty,
+        r.unit,
+        r.receiver,
+        r.dept,
+        r.status
+      FROM requests r
+      LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
+      WHERE r.dept = ? AND r.status IN ('APPROVED', 'REJECTED')
     `;
         const params = [req.user.name];
 
         if (from) {
-            query += ' AND bk.date >= ?';
+            query += ' AND r.date >= ?';
             params.push(from);
         }
         if (to) {
-            query += ' AND bk.date <= ?';
+            query += ' AND r.date <= ?';
             params.push(to);
         }
 
-        query += ' ORDER BY bk.date DESC, bk.id DESC';
+        query += ' ORDER BY r.created_at DESC, r.id DESC';
 
         const [entries] = await pool.query(query, params);
         res.json(entries);

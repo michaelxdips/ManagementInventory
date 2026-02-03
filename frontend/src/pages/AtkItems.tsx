@@ -244,7 +244,7 @@ const AtkItems = () => {
 				)}
 				{isUser && (
 					<p style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
-						Klik "Request" untuk mengajukan permintaan barang. Admin akan menyetujui permintaan Anda.
+						Klik "Ambil" untuk mengajukan permintaan barang. Admin akan menyetujui permintaan Anda.
 					</p>
 				)}
 				<Table>
@@ -293,7 +293,7 @@ const AtkItems = () => {
 													onClick={() => handleRequestClick(item)}
 													disabled={item.quantity <= 0}
 												>
-													{item.quantity > 0 ? '📋 Request' : 'Habis'}
+													{item.quantity > 0 ? '📦 Ambil' : 'Habis'}
 												</Button>
 											)}
 										</div>
@@ -390,7 +390,7 @@ const AtkItems = () => {
 			{showRequestModal && requestItem && (
 				<div className="modal-overlay" onClick={() => setShowRequestModal(false)}>
 					<div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-						<h2 className="modal-title">Request Barang</h2>
+						<h2 className="modal-title">Ambil Barang</h2>
 						{requestSuccess && (
 							<div style={{
 								padding: '12px 16px',
@@ -441,7 +441,7 @@ const AtkItems = () => {
 							</div>
 							<div className="form-actions">
 								<Button type="submit" disabled={requestLoading || !!requestSuccess}>
-									{requestLoading ? 'Mengirim...' : 'Kirim Request'}
+									{requestLoading ? 'Memproses...' : 'Ajukan Permintaan'}
 								</Button>
 								<Button type="button" variant="secondary" onClick={() => setShowRequestModal(false)}>
 									Batal

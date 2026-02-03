@@ -15,10 +15,10 @@ type CardItem = {
 };
 
 const cards: CardItem[] = [
-	{ title: 'Masukan ATK', description: 'Tambah stok barang baru ke inventory.', action: 'Tambah', href: '/barang-masuk/create', roles: ['admin', 'superadmin'] },
+	{ title: 'Barang Masuk', description: 'Tambah stok barang baru ke inventory.', action: 'Tambah', href: '/barang-masuk/create', roles: ['admin', 'superadmin'] },
 	{ title: 'Daftar Barang Masuk', description: 'Lihat riwayat barang yang masuk.', action: 'Lihat', href: '/history-masuk', roles: ['admin', 'superadmin'] },
 	{ title: 'Daftar Barang Keluar', description: 'Lihat riwayat barang yang keluar.', action: 'Lihat', href: '/history-keluar', roles: ['admin', 'superadmin'] },
-	{ title: 'Masukkan Request', description: 'Catat permintaan ATK dari unit.', action: 'Lanjutkan', href: '/requests', roles: ['user'] },
+	{ title: 'Request ATK', description: 'Ajukan permintaan barang ATK.', action: 'Buat Request', href: '/requests/create', roles: ['user'] },
 ];
 
 const ArrowIcon = () => (

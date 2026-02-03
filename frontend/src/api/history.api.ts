@@ -10,6 +10,7 @@ export type HistoryEntry = {
   pic?: string;
   receiver?: string;
   dept?: string;
+  status?: string;  // APPROVED / REJECTED
 };
 
 export type HistoryFilter = {

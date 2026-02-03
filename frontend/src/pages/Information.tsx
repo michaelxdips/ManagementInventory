@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
+import Badge from '../components/ui/Badge';
 import { fetchHistoryUser, HistoryEntry } from '../api/history.api';
 
 const Information = () => {
@@ -40,10 +41,22 @@ const Information = () => {
   const endIndex = Math.min(startIndex + perPage, data.length);
   const displayItems = data.slice(startIndex, endIndex);
 
+  const getStatusVariant = (status?: string) => {
+    const s = (status || '').toUpperCase();
+    if (s === 'APPROVED') return 'approved';
+    if (s === 'REJECTED') return 'rejected';
+    return 'pending';
+  };
+
+  const formatStatus = (status?: string) => {
+    if (!status) return '-';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
+
   return (
     <div className="history-page">
       <div className="history-card">
-        <h2 className="history-title">Informasi Barang Keluar (Barang yang Sudah Diambil)</h2>
+        <h2 className="history-title">Riwayat Permintaan ATK</h2>
 
         {error && <p className="danger-text" role="alert">{error}</p>}
         <Table>
@@ -56,7 +69,7 @@ const Information = () => {
               <TH>Jumlah</TH>
               <TH>Satuan</TH>
               <TH>Penerima</TH>
-              <TH>Unit</TH>
+              <TH>Status</TH>
             </TR>
           </THead>
           <TBody>
@@ -66,7 +79,7 @@ const Information = () => {
               </TR>
             ) : displayItems.length === 0 ? (
               <TR>
-                <TD colSpan={8} className="empty-row">Tidak ada data barang yang sudah diambil</TD>
+                <TD colSpan={8} className="empty-row">Belum ada riwayat permintaan</TD>
               </TR>
             ) : (
               displayItems.map((item, idx) => (
@@ -78,7 +91,11 @@ const Information = () => {
                   <TD>{item.qty}</TD>
                   <TD>{item.unit}</TD>
                   <TD>{item.receiver || '-'}</TD>
-                  <TD>{item.dept || '-'}</TD>
+                  <TD>
+                    <Badge variant={getStatusVariant(item.status)}>
+                      {formatStatus(item.status)}
+                    </Badge>
+                  </TD>
                 </TR>
               ))
             )}
@@ -87,7 +104,7 @@ const Information = () => {
 
         <div className="items-footer">
           <span className="items-meta">
-            Menampilkan {data.length > 0 ? startIndex + 1 : 0} - {endIndex} dari {data.length} barang
+            Menampilkan {data.length > 0 ? startIndex + 1 : 0} - {endIndex} dari {data.length} permintaan
           </span>
           <Pagination current={currentPage} total={totalPages} onChange={setPage} />
         </div>
@@ -97,3 +114,4 @@ const Information = () => {
 };
 
 export default Information;
+

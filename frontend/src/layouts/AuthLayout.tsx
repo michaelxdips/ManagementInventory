@@ -20,7 +20,7 @@ const navItems: NavItem[] = [
 	{ label: 'Information', path: '/information', icon: 'info', roles: ['user'] },
 	{ label: 'Barang Kosong', path: '/barang-kosong', icon: 'empty', roles: ['user'] },
 	{ label: 'Approval', path: '/approval', icon: 'check', roles: ['admin', 'superadmin'] },
-	{ label: 'Manage Units', path: '/manage-units', icon: 'units', roles: ['admin', 'superadmin'] },
+	{ label: 'Manage Units', path: '/manage-units', icon: 'units', roles: ['superadmin'] },
 ];
 
 const Icon = ({ name }: { name: string }) => {
