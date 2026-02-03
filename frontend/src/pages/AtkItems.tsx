@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
+import Modal from '../components/ui/Modal';
 import { fetchItems, Item, updateItem } from '../api/items.api';
 import { createRequest } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
@@ -313,144 +314,148 @@ const AtkItems = () => {
 			</div>
 
 			{/* Edit Modal - Superadmin Only */}
-			{showEditModal && (
-				<div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-					<div className="modal-content" onClick={(e) => e.stopPropagation()}>
-						<h2 className="modal-title">Edit Barang</h2>
-						{editError && <p className="danger-text">{editError}</p>}
-						<form onSubmit={handleEditSubmit} className="edit-form">
-							<div className="form-group">
-								<label htmlFor="edit-name">Nama Barang *</label>
-								<Input
-									id="edit-name"
-									type="text"
-									value={editFormData.name}
-									onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-									placeholder="Nama barang"
-									required
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="edit-code">Kode Barang</label>
-								<Input
-									id="edit-code"
-									type="text"
-									value={editFormData.code}
-									onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value })}
-									placeholder="Kode barang"
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="edit-qty">Jumlah *</label>
-								<Input
-									id="edit-qty"
-									type="number"
-									min={0}
-									value={editFormData.quantity}
-									onChange={(e) => setEditFormData({ ...editFormData, quantity: Number(e.target.value) })}
-									placeholder="Jumlah stok"
-									required
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="edit-unit">Satuan *</label>
-								<Input
-									id="edit-unit"
-									type="text"
-									value={editFormData.unit}
-									onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
-									placeholder="Satuan"
-									required
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="edit-location">Lokasi Simpan</label>
-								<Input
-									id="edit-location"
-									type="text"
-									value={editFormData.location}
-									onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
-									placeholder="Lokasi simpan"
-								/>
-							</div>
-							<div className="form-actions">
-								<Button type="submit" disabled={editLoading}>
-									{editLoading ? 'Menyimpan...' : 'Simpan'}
-								</Button>
-								<Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
-									Batal
-								</Button>
-							</div>
-						</form>
+			<Modal
+				isOpen={showEditModal}
+				onClose={() => setShowEditModal(false)}
+				title="Edit Barang"
+				footer={
+					<div className="form-actions">
+						<Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
+							Batal
+						</Button>
+						<Button type="submit" form="edit-form" disabled={editLoading}>
+							{editLoading ? 'Menyimpan...' : 'Simpan'}
+						</Button>
 					</div>
-				</div>
-			)}
+				}
+			>
+				{editError && <p className="danger-text">{editError}</p>}
+				<form id="edit-form" onSubmit={handleEditSubmit} className="edit-form">
+					<div className="form-group">
+						<label htmlFor="edit-name">Nama Barang *</label>
+						<Input
+							id="edit-name"
+							type="text"
+							value={editFormData.name}
+							onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+							placeholder="Nama barang"
+							required
+						/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="edit-code">Kode Barang</label>
+						<Input
+							id="edit-code"
+							type="text"
+							value={editFormData.code}
+							onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value })}
+							placeholder="Kode barang"
+						/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="edit-qty">Jumlah *</label>
+						<Input
+							id="edit-qty"
+							type="number"
+							min={0}
+							value={editFormData.quantity}
+							onChange={(e) => setEditFormData({ ...editFormData, quantity: Number(e.target.value) })}
+							placeholder="Jumlah stok"
+							required
+						/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="edit-unit">Satuan *</label>
+						<Input
+							id="edit-unit"
+							type="text"
+							value={editFormData.unit}
+							onChange={(e) => setEditFormData({ ...editFormData, unit: e.target.value })}
+							placeholder="Satuan"
+							required
+						/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="edit-location">Lokasi Simpan</label>
+						<Input
+							id="edit-location"
+							type="text"
+							value={editFormData.location}
+							onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+							placeholder="Lokasi simpan"
+						/>
+					</div>
+				</form>
+			</Modal>
 
 			{/* Request Modal - User Role */}
-			{showRequestModal && requestItem && (
-				<div className="modal-overlay" onClick={() => setShowRequestModal(false)}>
-					<div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-						<h2 className="modal-title">Ambil Barang</h2>
-						{requestSuccess && (
-							<div style={{
-								padding: '12px 16px',
-								background: 'var(--success-bg, #d4edda)',
-								color: 'var(--success-text, #155724)',
-								borderRadius: '6px',
-								marginBottom: '16px'
-							}}>
-								{requestSuccess}
-							</div>
-						)}
-						{requestError && <p className="danger-text">{requestError}</p>}
-						<form onSubmit={handleRequestSubmit} className="edit-form">
-							<div className="form-group">
-								<label htmlFor="req-name">Nama Barang</label>
-								<Input
-									id="req-name"
-									type="text"
-									value={requestItem.name}
-									disabled
-								/>
-							</div>
-							<div className="form-group">
-								<label htmlFor="req-qty">Jumlah Request</label>
-								<Input
-									id="req-qty"
-									type="number"
-									min="1"
-									max={requestItem.quantity}
-									value={requestQty}
-									onChange={(e) => setRequestQty(Math.max(1, parseInt(e.target.value) || 1))}
-									required
-								/>
-								<p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-									Stok tersedia: {requestItem.quantity} {requestItem.unit}
-								</p>
-							</div>
-							<div className="form-group">
-								<label htmlFor="req-penerima">Penerima *</label>
-								<Input
-									id="req-penerima"
-									type="text"
-									value={requestPenerima}
-									onChange={(e) => setRequestPenerima(e.target.value)}
-									placeholder="Nama penerima"
-									required
-								/>
-							</div>
-							<div className="form-actions">
-								<Button type="submit" disabled={requestLoading || !!requestSuccess}>
-									{requestLoading ? 'Memproses...' : 'Ajukan Permintaan'}
-								</Button>
-								<Button type="button" variant="secondary" onClick={() => setShowRequestModal(false)}>
-									Batal
-								</Button>
-							</div>
-						</form>
+			<Modal
+				isOpen={showRequestModal && !!requestItem}
+				onClose={() => setShowRequestModal(false)}
+				title="Ambil Barang"
+				footer={
+					<div className="form-actions">
+						<Button type="button" variant="secondary" onClick={() => setShowRequestModal(false)}>
+							Batal
+						</Button>
+						<Button type="submit" form="request-form" disabled={requestLoading || !!requestSuccess}>
+							{requestLoading ? 'Memproses...' : 'Ajukan Permintaan'}
+						</Button>
 					</div>
-				</div>
-			)}
+				}
+			>
+				{requestSuccess && (
+					<div style={{
+						padding: '12px 16px',
+						background: 'var(--success-bg, #d4edda)',
+						color: 'var(--success-text, #155724)',
+						borderRadius: '6px',
+						marginBottom: '16px'
+					}}>
+						{requestSuccess}
+					</div>
+				)}
+				{requestError && <p className="danger-text">{requestError}</p>}
+				{requestItem && (
+					<form id="request-form" onSubmit={handleRequestSubmit} className="edit-form">
+						<div className="form-group">
+							<label htmlFor="req-name">Nama Barang</label>
+							<Input
+								id="req-name"
+								type="text"
+								value={requestItem.name}
+								disabled
+							/>
+						</div>
+						<div className="form-group">
+							<label htmlFor="req-qty">Jumlah Request</label>
+							<Input
+								id="req-qty"
+								type="number"
+								min="1"
+								max={requestItem.quantity}
+								value={requestQty}
+								onChange={(e) => setRequestQty(Math.max(1, parseInt(e.target.value) || 1))}
+								required
+							/>
+							<p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+								Stok tersedia: {requestItem.quantity} {requestItem.unit}
+							</p>
+						</div>
+						<div className="form-group">
+							<label htmlFor="req-penerima">Penerima *</label>
+							<Input
+								id="req-penerima"
+								type="text"
+								value={requestPenerima}
+								onChange={(e) => setRequestPenerima(e.target.value)}
+								placeholder="Nama penerima"
+								required
+							/>
+						</div>
+					</form>
+				)}
+			</Modal>
 		</div>
 	);
 };
