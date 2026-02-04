@@ -96,6 +96,15 @@ router.delete('/account', authenticate, async (req, res) => {
             }
         }
 
+        // OPTIMIZATION: Orphan Data Protection
+        // Check if user has associated requests
+        const [reqRows] = await pool.query('SELECT 1 FROM requests WHERE user_id = ? LIMIT 1', [req.user.id]);
+        if (reqRows.length > 0) {
+            return res.status(400).json({
+                message: 'Tidak dapat menghapus akun karena memiliki riwayat peminjaman. Hubungi admin untuk penonaktifan.'
+            });
+        }
+
         await pool.execute('DELETE FROM users WHERE id = ?', [req.user.id]);
 
         res.status(204).send();
