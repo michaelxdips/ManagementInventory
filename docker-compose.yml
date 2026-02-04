@@ -9,9 +9,11 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/data  # Consistent path with backend code
+    env_file:
+      - ./backend/.env
     environment:
       - NODE_ENV=production
-      - JWT_SECRET=super-secret-pkl-key
+      # JWT_SECRET loaded from .env, or override here if needed
 
   frontend:
     build: ./frontend
