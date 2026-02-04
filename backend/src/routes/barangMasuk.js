@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { getWIBDate } from '../utils/date.js';
 
 const router = Router();
 
@@ -64,7 +65,7 @@ router.post('/', authenticate, authorize('admin', 'superadmin'), async (req, res
 
         await connection.beginTransaction();
 
-        const date = tanggal || new Date().toISOString().split('T')[0];
+        const date = tanggal || getWIBDate();
 
         // Find or create item in inventory
         // Use FOR UPDATE to lock row if exists
