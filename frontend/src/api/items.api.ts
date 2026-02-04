@@ -42,6 +42,3 @@ export const getItemById = (id: number) =>
 
 export const updateItem = (id: number, payload: UpdateItemPayload) =>
   http.put(`/atk-items/${id}`, payload);
-
-export const takeItem = (itemId: number, qty: number, penerima: string) =>
-  http.post(`/barang-keluar/take`, { atk_item_id: itemId, qty, penerima });

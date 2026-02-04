@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
 import Badge from '../components/ui/Badge';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchHistoryUser, HistoryEntry } from '../api/history.api';
 
 const Information = () => {
@@ -101,6 +102,34 @@ const Information = () => {
             )}
           </TBody>
         </Table>
+
+        {/* Mobile Card View */}
+        <MobileCardList
+          isEmpty={displayItems.length === 0}
+          isLoading={loading}
+          emptyMessage="Belum ada riwayat permintaan"
+        >
+          {displayItems.map((item, idx) => (
+            <MobileCard
+              key={item.id}
+              header={
+                <>
+                  <span className="mobile-card-header-title">{item.name}</span>
+                  <Badge variant={getStatusVariant(item.status)}>
+                    {formatStatus(item.status)}
+                  </Badge>
+                </>
+              }
+              fields={[
+                { label: 'No', value: startIndex + idx + 1 },
+                { label: 'Tanggal', value: item.date },
+                { label: 'Kode', value: item.code || '-' },
+                { label: 'Jumlah', value: `${item.qty} ${item.unit}` },
+                { label: 'Penerima', value: item.receiver || '-' },
+              ]}
+            />
+          ))}
+        </MobileCardList>
 
         <div className="items-footer">
           <span className="items-meta">

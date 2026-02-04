@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchUnits, UnitItem } from '../api/units.api';
 
 const UserPlusIcon = () => (
@@ -83,6 +84,26 @@ const ManageUnits = () => {
             )}
           </TBody>
         </Table>
+
+        {/* Mobile Card View */}
+        <MobileCardList
+          isEmpty={units.length === 0}
+          isLoading={loading}
+          emptyMessage="Belum ada unit"
+        >
+          {units.map((row, idx) => (
+            <MobileCard
+              key={row.id}
+              header={
+                <span className="mobile-card-header-title">{row.name}</span>
+              }
+              fields={[
+                { label: 'No', value: idx + 1 },
+                { label: 'Username', value: row.username },
+              ]}
+            />
+          ))}
+        </MobileCardList>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { approveRequest, fetchApproval, rejectRequest, ApprovalItem } from '../api/approval.api';
 
 const CheckIcon = () => (
@@ -181,6 +182,53 @@ const Approval = () => {
             )}
           </TBody>
         </Table>
+
+        {/* Mobile Card View */}
+        <MobileCardList
+          isEmpty={data.length === 0}
+          isLoading={loading}
+          emptyMessage="Tidak ada permintaan yang menunggu persetujuan"
+        >
+          {data.map((row, idx) => (
+            <MobileCard
+              key={row.id}
+              header={
+                <>
+                  <span className="mobile-card-header-title">{row.name}</span>
+                  <span className="badge badge-pending">Pending</span>
+                </>
+              }
+              fields={[
+                { label: 'No', value: idx + 1 },
+                { label: 'Tanggal', value: row.date },
+                { label: 'Kode', value: row.code || '-' },
+                { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
+                { label: 'Penerima', value: row.receiver },
+                { label: 'Unit', value: row.dept },
+              ]}
+              actions={
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleApprove(row)}
+                    disabled={processingId === row.id}
+                  >
+                    <CheckIcon /> {processingId === row.id ? '...' : 'Setujui'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => handleReject(row)}
+                    disabled={processingId === row.id}
+                  >
+                    <XIcon /> Tolak
+                  </Button>
+                </>
+              }
+            />
+          ))}
+        </MobileCardList>
       </div>
     </div>
   );

@@ -72,6 +72,21 @@ router.put('/password', authenticate, async (req, res) => {
 // DELETE /api/users/account - Delete current user account
 router.delete('/account', authenticate, async (req, res) => {
     try {
+        const { password } = req.body;
+
+        if (!password) {
+            return res.status(400).json({ message: 'Password konfirmasi diperlukan untuk menghapus akun' });
+        }
+
+        // Verify password first
+        const [userRows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+        const user = userRows[0];
+        const isValid = bcrypt.compareSync(password, user.password_hash);
+
+        if (!isValid) {
+            return res.status(401).json({ message: 'Password salah. Gagal menghapus akun.' });
+        }
+
         // Don't allow deleting superadmin accounts easily
         if (req.user.role === 'superadmin') {
             // Check if this is the last superadmin

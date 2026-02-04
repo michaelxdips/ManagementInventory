@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import AuthLayout from '../layouts/AuthLayout';
+import { LayoutSwitcher } from '../components/Layout';
 import GuestLayout from '../layouts/GuestLayout';
 import Approval from '../pages/Approval';
 import AtkItems from '../pages/AtkItems';
@@ -29,9 +29,11 @@ const AppRoutes = () => {
 
 			{/* Protected Routes - Authenticated Users */}
 			<Route element={<ProtectedRoute />}>
-				<Route element={<AuthLayout />}>
+				{/* LayoutSwitcher automatically selects desktop/mobile layout */}
+				<Route element={<LayoutSwitcher />}>
 					{/* Common routes for all authenticated users */}
 					<Route path="/dashboard" element={<Dashboard />} />
+
 					<Route path="/items" element={<AtkItems />} />
 					<Route path="/settings" element={<ProfileSettings />} />
 					<Route path="/settings/password" element={<PasswordSettings />} />

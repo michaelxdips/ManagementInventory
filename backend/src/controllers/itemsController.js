@@ -45,8 +45,8 @@ export const updateItem = async (req, res) => {
             return res.status(400).json({ message: 'Quantity cannot be negative' });
         }
 
-        // FIX #2: Lock edit qty saat ada pending request
-        if (typeof qty === 'number' && qty !== existing.qty) {
+        // FIX #2: Lock edit qty OR NAME saat ada pending request
+        if ((typeof qty === 'number' && qty !== existing.qty) || (nama_barang && nama_barang !== existing.nama_barang)) {
             const [countRows] = await pool.query(`
                 SELECT COUNT(*) as count 
                 FROM requests 
@@ -57,7 +57,7 @@ export const updateItem = async (req, res) => {
 
             if (pendingCount && pendingCount.count > 0) {
                 return res.status(409).json({
-                    message: 'Item cannot be edited while there are pending requests'
+                    message: 'Item cannot be edited (qty/name) while there are pending requests. Reject/Approve them first.'
                 });
             }
         }
