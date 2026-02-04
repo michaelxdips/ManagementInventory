@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 import useAuth from '../hooks/useAuth';
 import Modal from '../components/ui/Modal';
 import { updateProfile, deleteAccount } from '../api/users.api';
@@ -15,6 +16,9 @@ const ProfileSettings = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [showConfirm, setShowConfirm] = useState(false);
+
+	// Password for deletion confirmation
+	const [deletePassword, setDeletePassword] = useState('');
 
 	// Initialize state from auth context
 	useEffect(() => {
@@ -47,28 +51,37 @@ const ProfileSettings = () => {
 	};
 
 	const handleDelete = () => {
+		setDeletePassword('');
+		setError(null);
 		setShowConfirm(true);
 	};
 
-	const confirmDelete = async () => {
-		// setShowConfirm(false); // Don't close immediately to show state
+	const confirmDelete = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!deletePassword) {
+			setError('Password diperlukan untuk konfirmasi penghapusan');
+			return;
+		}
+
 		setMessage(null);
 		setError(null);
 		setSaving(true);
 
 		try {
-			await deleteAccount();
+			await deleteAccount(deletePassword);
 			await logout(); // Clear context and redirect
 			navigate('/login');
 		} catch (err: any) {
-			setError(err.response?.data?.message || 'Gagal menghapus akun');
+			setError(err.response?.data?.message || 'Gagal menghapus akun. Password mungkin salah.');
 			setSaving(false);
-			setShowConfirm(false);
+			// setShowConfirm(false); // Keep open on error so user can retry
 		}
 	};
 
 	const cancelDelete = () => {
 		setShowConfirm(false);
+		setDeletePassword('');
+		setError(null);
 	};
 
 	return (
@@ -153,17 +166,34 @@ const ProfileSettings = () => {
 				footer={
 					<div className="modal-actions">
 						<Button type="button" variant="secondary" onClick={cancelDelete}>Batal</Button>
-						<Button type="button" variant="danger" onClick={confirmDelete} disabled={saving}>
-							{saving ? 'Menghapus...' : 'Hapus'}
+						<Button type="submit" form="delete-form" variant="danger" disabled={saving}>
+							{saving ? 'Menghapus...' : 'Hapus Permanen'}
 						</Button>
 					</div>
 				}
 			>
 				<div style={{ marginBottom: '16px' }}>
-					<p className="modal-kicker">Konfirmasi</p>
+					<p className="modal-kicker">Konfirmasi Keamanan</p>
 					<p style={{ color: 'var(--muted)', fontSize: '14px', margin: '8px 0' }}>
-						Tindakan ini tidak dapat dibatalkan. Semua data akun akan dihapus.
+						Tindakan ini tidak dapat dibatalkan. Masukkan password Anda untuk konfirmasi.
 					</p>
+
+					{error && <p className="danger-text" style={{ marginBottom: '8px' }}>{error}</p>}
+
+					<form id="delete-form" onSubmit={confirmDelete}>
+						<div className="form-group" style={{ marginTop: '16px' }}>
+							<label htmlFor="del-password">Password Anda</label>
+							<Input
+								id="del-password"
+								type="password"
+								placeholder="Masukkan password saat ini"
+								value={deletePassword}
+								onChange={(e) => setDeletePassword(e.target.value)}
+								required
+								autoFocus
+							/>
+						</div>
+					</form>
 				</div>
 			</Modal>
 		</div>

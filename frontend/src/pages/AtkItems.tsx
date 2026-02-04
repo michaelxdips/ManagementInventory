@@ -5,6 +5,7 @@ import Input from '../components/ui/Input';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchItems, Item, updateItem } from '../api/items.api';
 import { createRequest } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
@@ -304,6 +305,49 @@ const AtkItems = () => {
 						)}
 					</TBody>
 				</Table>
+
+				{/* Mobile Card View */}
+				<MobileCardList
+					isEmpty={displayItems.length === 0}
+					isLoading={loading}
+					emptyMessage="Tidak ada data barang"
+				>
+					{displayItems.map((item, idx) => (
+						<MobileCard
+							key={item.id}
+							header={
+								<>
+									<span className="mobile-card-header-title">{item.name}</span>
+									{item.quantity <= 0 && (
+										<span className="badge badge-rejected">Habis</span>
+									)}
+								</>
+							}
+							fields={[
+								{ label: 'No', value: startIndex + idx + 1 },
+								{ label: 'Kode', value: item.code || '-' },
+								{ label: 'Jumlah', value: `${item.quantity.toLocaleString('id-ID')} ${item.unit}` },
+								{ label: 'Lokasi', value: item.location || '-' },
+							]}
+							actions={
+								isSuperadmin ? (
+									<Button type="button" variant="ghost" onClick={() => handleEditClick(item)}>
+										✏ Edit Barang
+									</Button>
+								) : isAdminOrSuperadmin ? null : (
+									<Button
+										type="button"
+										variant={item.quantity > 0 ? 'secondary' : 'ghost'}
+										onClick={() => handleRequestClick(item)}
+										disabled={item.quantity <= 0}
+									>
+										{item.quantity > 0 ? '📦 Ambil Barang' : 'Stok Habis'}
+									</Button>
+								)
+							}
+						/>
+					))}
+				</MobileCardList>
 
 				<div className="items-footer">
 					<span className="items-meta">

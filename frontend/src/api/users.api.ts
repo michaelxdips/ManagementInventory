@@ -11,8 +11,9 @@ export const updatePassword = async (payload: { currentPassword: string; newPass
     return data;
 };
 
-export const deleteAccount = async (): Promise<void> => {
-    await api.delete('/users/account');
+export const deleteAccount = async (password: string): Promise<void> => {
+    // Axios delete accepts config as second argument, data is inside config
+    await api.delete('/users/account', { data: { password } });
     if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
     }

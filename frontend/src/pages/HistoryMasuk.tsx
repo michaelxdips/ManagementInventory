@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Button from '../components/ui/Button';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchHistoryMasuk, HistoryEntry, HistoryFilter } from '../api/history.api';
 
 const formatDisplayDate = (iso: string) => iso;
@@ -46,22 +47,9 @@ const HistoryMasuk = () => {
   }, [from, to]);
 
   const filtered = useMemo(() => {
-    const fromDate = parseDate(from);
-    const toDate = parseDate(to);
-
-    if (fromDate && toDate && fromDate > toDate) {
-      return [];
-    }
-
-    return data
-      .filter((entry) => {
-        const current = new Date(entry.date);
-        if (fromDate && current < fromDate) return false;
-        if (toDate && current > toDate) return false;
-        return true;
-      })
-      .sort((a, b) => (a.date > b.date ? -1 : 1));
-  }, [from, to, data]);
+    // Data is already filtered and sorted by backend
+    return data;
+  }, [data]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const currentPage = Math.min(page, totalPages);
@@ -188,6 +176,29 @@ const HistoryMasuk = () => {
             )}
           </TBody>
         </Table>
+
+        {/* Mobile Card View */}
+        <MobileCardList
+          isEmpty={pageRows.length === 0}
+          isLoading={loading}
+          emptyMessage="Tidak ada data pada rentang tanggal ini"
+        >
+          {pageRows.map((row, idx) => (
+            <MobileCard
+              key={row.id}
+              header={
+                <span className="mobile-card-header-title">{row.name}</span>
+              }
+              fields={[
+                { label: 'No', value: startIndex + idx + 1 },
+                { label: 'Tanggal', value: formatDisplayDate(row.date) },
+                { label: 'Kode', value: row.code },
+                { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
+                { label: 'PIC', value: row.pic },
+              ]}
+            />
+          ))}
+        </MobileCardList>
 
         <div className="items-footer">
           <span className="items-meta">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Button from '../components/ui/Button';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchBarangKosong, BarangKosongItem } from '../api/barangKosong.api';
 
 const PrintIcon = () => (
@@ -98,6 +99,30 @@ const BarangKosong = () => {
             )}
           </TBody>
         </Table>
+
+        {/* Mobile Card View */}
+        <MobileCardList
+          isEmpty={items.length === 0}
+          isLoading={loading}
+          emptyMessage="Tidak ada barang kosong"
+        >
+          {items.map((item, idx) => (
+            <MobileCard
+              key={item.id}
+              header={
+                <>
+                  <span className="mobile-card-header-title">{item.name}</span>
+                  <span className="badge badge-rejected">Habis</span>
+                </>
+              }
+              fields={[
+                { label: 'No', value: idx + 1 },
+                { label: 'Kode', value: item.code ?? '-' },
+                { label: 'Lokasi', value: item.location ?? '-' },
+              ]}
+            />
+          ))}
+        </MobileCardList>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
+import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchRequests, RequestItem } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
 
@@ -110,6 +111,34 @@ const Requests = () => {
             )}
           </TBody>
         </Table>
+
+        {/* Mobile Card View */}
+        <MobileCardList
+          isEmpty={data.length === 0}
+          isLoading={loading}
+          emptyMessage="Tidak ada permintaan"
+        >
+          {data.map((row, idx) => (
+            <MobileCard
+              key={row.id}
+              header={
+                <>
+                  <span className="mobile-card-header-title">{row.item}</span>
+                  <Badge variant={getStatusVariant(row.status)}>
+                    {formatStatus(row.status)}
+                  </Badge>
+                </>
+              }
+              fields={[
+                { label: 'No', value: idx + 1 },
+                { label: 'Tanggal', value: row.date },
+                { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
+                { label: 'Penerima', value: row.receiver },
+                { label: 'Unit', value: row.dept },
+              ]}
+            />
+          ))}
+        </MobileCardList>
       </div>
     </div>
   );

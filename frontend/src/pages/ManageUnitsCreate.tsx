@@ -15,7 +15,7 @@ const ManageUnitsCreate = () => {
   const navigate = useNavigate();
   const [formValues, setFormValues] = useState({
     unitName: '',
-    username: 'username123',
+    username: '',
     password: '',
     confirmPassword: '',
   });
@@ -50,7 +50,7 @@ const ManageUnitsCreate = () => {
     createUnit({ unitName, username, password })
       .then(() => {
         setSuccess('Akun unit berhasil dibuat');
-        setFormValues({ unitName: '', username, password: '', confirmPassword: '' });
+        setFormValues({ unitName: '', username: '', password: '', confirmPassword: '' });
         navigate('/manage-units', { state: { refresh: true } });
       })
       .catch(() => {
