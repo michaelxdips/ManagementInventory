@@ -5,7 +5,7 @@ import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchHistoryMasuk, HistoryEntry, HistoryFilter } from '../api/history.api';
 
-const formatDisplayDate = (iso: string) => iso;
+import { formatDateV2 } from '../utils/dateUtils';
 
 const parseDate = (value: string) => (value ? new Date(value) : null);
 
@@ -165,7 +165,7 @@ const HistoryMasuk = () => {
               pageRows.map((row, idx) => (
                 <TR key={row.id}>
                   <TD>{startIndex + idx + 1}</TD>
-                  <TD>{formatDisplayDate(row.date)}</TD>
+                  <TD>{formatDateV2(row.date)}</TD>
                   <TD>{row.name}</TD>
                   <TD>{row.code}</TD>
                   <TD>{row.qty}</TD>
@@ -191,7 +191,7 @@ const HistoryMasuk = () => {
               }
               fields={[
                 { label: 'No', value: startIndex + idx + 1 },
-                { label: 'Tanggal', value: formatDisplayDate(row.date) },
+                { label: 'Tanggal', value: formatDateV2(row.date) },
                 { label: 'Kode', value: row.code },
                 { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
                 { label: 'PIC', value: row.pic },

@@ -4,6 +4,7 @@ import Badge from '../components/ui/Badge';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { approveRequest, fetchApproval, rejectRequest, ApprovalItem } from '../api/approval.api';
+import { formatDateV2 } from '../utils/dateUtils';
 
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -148,7 +149,7 @@ const Approval = () => {
               data.map((row, idx) => (
                 <TR key={row.id}>
                   <TD>{idx + 1}</TD>
-                  <TD>{row.date}</TD>
+                  <TD>{formatDateV2(row.date)}</TD>
                   <TD>{row.name}</TD>
                   <TD>{row.code || '-'}</TD>
                   <TD>{row.qty}</TD>
@@ -200,7 +201,7 @@ const Approval = () => {
               }
               fields={[
                 { label: 'No', value: idx + 1 },
-                { label: 'Tanggal', value: row.date },
+                { label: 'Tanggal', value: formatDateV2(row.date) },
                 { label: 'Kode', value: row.code || '-' },
                 { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
                 { label: 'Penerima', value: row.receiver },

@@ -4,6 +4,7 @@ import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchHistoryKeluar, HistoryEntry, HistoryFilter } from '../api/history.api';
+import { formatDateV2 } from '../utils/dateUtils';
 
 const parseDate = (value: string) => (value ? new Date(value) : null);
 
@@ -163,7 +164,7 @@ const HistoryKeluar = () => {
               pageRows.map((row, idx) => (
                 <TR key={row.id}>
                   <TD>{startIndex + idx + 1}</TD>
-                  <TD>{row.date}</TD>
+                  <TD>{formatDateV2(row.date)}</TD>
                   <TD>{row.name}</TD>
                   <TD>{row.code}</TD>
                   <TD>{row.qty}</TD>
@@ -190,7 +191,7 @@ const HistoryKeluar = () => {
               }
               fields={[
                 { label: 'No', value: startIndex + idx + 1 },
-                { label: 'Tanggal', value: row.date },
+                { label: 'Tanggal', value: formatDateV2(row.date) },
                 { label: 'Kode', value: row.code },
                 { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
                 { label: 'Penerima', value: row.receiver },

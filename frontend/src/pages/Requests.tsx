@@ -6,6 +6,7 @@ import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchRequests, RequestItem } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
+import { formatDateV2 } from '../utils/dateUtils';
 
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -95,7 +96,7 @@ const Requests = () => {
               data.map((row, idx) => (
                 <TR key={row.id}>
                   <TD>{idx + 1}</TD>
-                  <TD>{row.date}</TD>
+                  <TD>{formatDateV2(row.date)}</TD>
                   <TD>{row.item}</TD>
                   <TD>{row.qty}</TD>
                   <TD>{row.unit}</TD>
@@ -131,7 +132,7 @@ const Requests = () => {
               }
               fields={[
                 { label: 'No', value: idx + 1 },
-                { label: 'Tanggal', value: row.date },
+                { label: 'Tanggal', value: formatDateV2(row.date) },
                 { label: 'Jumlah', value: `${row.qty} ${row.unit}` },
                 { label: 'Penerima', value: row.receiver },
                 { label: 'Unit', value: row.dept },
