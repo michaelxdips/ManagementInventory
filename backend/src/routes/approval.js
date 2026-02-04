@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { getWIBDate } from '../utils/date.js';
 
 const router = Router();
 
@@ -84,7 +85,7 @@ router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), asyn
         await connection.execute('UPDATE atk_items SET qty = ? WHERE id = ?', [newQty, item.id]);
 
         // Step 7: Record barang keluar
-        const today = new Date().toISOString().split('T')[0];
+        const today = getWIBDate();
         await connection.execute(`
             INSERT INTO barang_keluar (date, atk_item_id, nama_barang, kode_barang, qty, satuan, penerima, dept)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)

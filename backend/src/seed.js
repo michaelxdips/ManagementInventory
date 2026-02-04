@@ -18,7 +18,7 @@ const seed = async () => {
         name VARCHAR(255) NOT NULL,
         username VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        role ENUM('admin', 'superadmin', 'user', 'viewer') NOT NULL DEFAULT 'user',
+        role ENUM('admin', 'superadmin', 'user') NOT NULL DEFAULT 'user',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -119,7 +119,7 @@ const seed = async () => {
       { name: 'Performance, Risk & QOS', username: 'prq', password: 'user123', role: 'user' },
       { name: 'Finance', username: 'finance', password: 'user123', role: 'user' },
       { name: 'IT Support', username: 'itsupport', password: 'user123', role: 'user' },
-      { name: 'Viewer', username: 'viewer', password: 'viewer123', role: 'viewer' },
+
     ];
 
     for (const user of users) {
@@ -187,7 +187,7 @@ const seed = async () => {
 
     // Helper to get userId by role/name approximation (or just hardcode based on known index from seed)
     // The original seed had hardcoded IDs 4, 5. Let's map them properly.
-    // users array: 0=superadmin, 1=admin1, 2=admin2, 3=ssgs, 4=prq, 5=finance, 6=itsupport, 7=viewer
+    // users array: 0=superadmin, 1=admin1, 2=admin2, 3=ssgs, 4=prq, 5=finance, 6=itsupport
     // Original: userId 4 -> Likely 'ssgs' or 'prq'?
     // Let's assume:
     // User 'ssgs' (index 3) is likely the requester for SSGS dept.
@@ -259,7 +259,7 @@ const seed = async () => {
     console.log('   Superadmin: superadmin / admin123');
     console.log('   Admin:      admin1 / admin123');
     console.log('   User:       ssgs / user123');
-    console.log('   Viewer:     viewer / viewer123');
+
 
   } catch (error) {
     await connection.rollback();

@@ -46,10 +46,22 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
             return res.status(400).json({ message: 'Semua field wajib diisi' });
         }
 
+        // FIX: Validate item exists in inventory (Case Insensitive) AND use correct name
+        const [itemRows] = await pool.query('SELECT nama_barang, satuan FROM atk_items WHERE LOWER(nama_barang) = LOWER(?)', [item]);
+
+        if (itemRows.length === 0) {
+            return res.status(400).json({
+                message: `Barang "${item}" tidak ditemukan di database. Pastikan nama barang sesuai katalog.`
+            });
+        }
+
+        const validItemName = itemRows[0].nama_barang;
+        // Optional: Enforce unit consistency? For now just trusting user/frontend input but corrected name is key.
+
         const [result] = await pool.execute(`
       INSERT INTO requests (date, item, qty, unit, receiver, dept, status, user_id)
       VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?)
-    `, [date, item, qty, unit, receiver, dept, req.user.id]);
+    `, [date, validItemName, qty, unit, receiver, dept, req.user.id]);
 
         const [newRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [result.insertId]);
         res.status(201).json(newRows[0]);
