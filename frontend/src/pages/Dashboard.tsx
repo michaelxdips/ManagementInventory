@@ -2,6 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import useAuth from '../hooks/useAuth';
 import { Role } from '../types/auth';
+import { useState } from 'react';
+import UserRequestList from '../components/dashboard/UserRequestList';
+import UserRequestForm from '../components/dashboard/UserRequestForm';
 
 
 type CardItem = {
@@ -33,6 +36,33 @@ const Dashboard = () => {
 
 	const visibleCards = cards.filter((card) => !card.roles || hasRole(card.roles));
 
+	const [refreshTrigger, setRefreshTrigger] = useState(0);
+	const isUser = hasRole(['user']) && !hasRole(['admin', 'superadmin']);
+
+	if (isUser) {
+		return (
+			<div className="dashboard">
+				<div style={{ marginBottom: '24px' }}>
+					<h2 className="card-title">User Dashboard</h2>
+					<p className="card-desc">Kelola permintaan barang ATK Anda di sini.</p>
+				</div>
+				<div className="dashboard-grid-user" style={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+					gap: '24px',
+					alignItems: 'start'
+				}}>
+					<div style={{ minHeight: '400px' }}>
+						<UserRequestList refreshTrigger={refreshTrigger} />
+					</div>
+					<div style={{ minHeight: '400px' }}>
+						<UserRequestForm onSuccess={() => setRefreshTrigger(n => n + 1)} />
+					</div>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="dashboard">
 			<div className="card-grid">
@@ -58,8 +88,6 @@ const Dashboard = () => {
 					</article>
 				))}
 			</div>
-
-
 		</div>
 	);
 };

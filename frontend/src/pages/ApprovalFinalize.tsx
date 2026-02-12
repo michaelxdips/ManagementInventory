@@ -57,23 +57,13 @@ const ApprovalFinalize = () => {
         if (finalQty <= 0) return 'Jumlah harus lebih dari 0';
         if (finalQty > detail.requestQty) return `Jumlah tidak boleh melebihi permintaan (${detail.requestQty})`;
         if (finalQty > detail.stok_tersedia) return `Jumlah tidak boleh melebihi stok tersedia (${detail.stok_tersedia})`;
-        // R3: Quota hard limit
-        if (detail.quota_remaining !== null && finalQty > detail.quota_remaining) {
-            return `Melebihi sisa jatah unit (${detail.quota_remaining})`;
-        }
-        return null;
-    };
-
-    const getFairnessWarning = (): string | null => {
-        if (!detail || !detail.fair_share) return null;
-        if (finalQty > detail.fair_share && !getValidationError()) {
-            return `⚠️ Jumlah ini melebihi pembagian adil (fair share: ${detail.fair_share}). Pastikan distribusi ke unit lain tetap cukup.`;
-        }
+        if (finalQty > detail.stok_tersedia) return `Jumlah tidak boleh melebihi stok tersedia (${detail.stok_tersedia})`;
+        // Fair share removed
         return null;
     };
 
     const validationError = getValidationError();
-    const fairnessWarning = getFairnessWarning();
+    // const fairnessWarning = getFairnessWarning();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -224,40 +214,7 @@ const ApprovalFinalize = () => {
                             />
                         </div>
 
-                        {/* Quota Info Box */}
-                        {detail.quota_max !== null && (
-                            <div style={{
-                                padding: '12px 16px',
-                                background: 'var(--surface-alt, #1e293b)',
-                                borderRadius: '8px',
-                                border: '1px solid var(--border, #334155)',
-                                marginBottom: '4px',
-                            }}>
-                                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
-                                    📊 Jatah Unit: {detail.dept}
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', fontSize: '13px' }}>
-                                    <div>
-                                        <span style={{ color: 'var(--text-muted)' }}>Jatah Total</span>
-                                        <div style={{ fontWeight: 600, fontSize: '16px' }}>{detail.quota_max}</div>
-                                    </div>
-                                    <div>
-                                        <span style={{ color: 'var(--text-muted)' }}>Sudah Dipakai</span>
-                                        <div style={{ fontWeight: 600, fontSize: '16px' }}>{detail.quota_used}</div>
-                                    </div>
-                                    <div>
-                                        <span style={{ color: 'var(--text-muted)' }}>Sisa Jatah</span>
-                                        <div style={{
-                                            fontWeight: 600,
-                                            fontSize: '16px',
-                                            color: (detail.quota_remaining ?? 0) <= 0 ? '#f87171' : '#4ade80'
-                                        }}>
-                                            {detail.quota_remaining}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {/* Quota Info Box REMOVED */}
 
                         {/* Jumlah (editable ONLY if APPROVAL_REVIEW) */}
                         <div className="form-group">
@@ -267,8 +224,7 @@ const ApprovalFinalize = () => {
                                 min="1"
                                 max={Math.min(
                                     detail.requestQty,
-                                    detail.stok_tersedia,
-                                    ...(detail.quota_remaining !== null ? [detail.quota_remaining] : [])
+                                    detail.stok_tersedia
                                 )}
                                 value={finalQty}
                                 onChange={handleQtyChange}
@@ -282,18 +238,13 @@ const ApprovalFinalize = () => {
                             />
                             <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                 Permintaan asli: {detail.requestQty} · Stok: {detail.stok_tersedia}
-                                {detail.quota_remaining !== null && ` · Sisa jatah: ${detail.quota_remaining}`}
                             </span>
                             {detail.status === 'APPROVAL_REVIEW' && validationError && (
                                 <span style={{ fontSize: '13px', color: '#f1c7c7', marginTop: '2px' }}>
                                     {validationError}
                                 </span>
                             )}
-                            {detail.status === 'APPROVAL_REVIEW' && fairnessWarning && (
-                                <span style={{ fontSize: '13px', color: '#fbbf24', marginTop: '4px', display: 'block' }}>
-                                    {fairnessWarning}
-                                </span>
-                            )}
+                            {/* Fairness warning removed */}
                         </div>
 
                         {/* Satuan (readonly) */}

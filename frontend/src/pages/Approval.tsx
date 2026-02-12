@@ -169,15 +169,28 @@ const Approval = () => {
                   <TD>{row.dept}</TD>
                   <TD>
                     <div className="action-buttons">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleApprove(row)}
-                        disabled={processingId === row.id}
-                      >
-                        <CheckIcon /> {processingId === row.id ? '...' : 'Setujui'}
-                      </Button>
+                      {row.status === 'approval_review' ? (
+                        <Button
+                          type="button"
+                          variant="primary" // Different color to indicate it's in progress
+                          size="sm"
+                          onClick={() => navigate(`/approval/${row.id}/finalize`)}
+                          disabled={processingId === row.id}
+                        >
+                          <CheckIcon /> Lanjut Review
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleApprove(row)}
+                          disabled={processingId === row.id}
+                        >
+                          <CheckIcon /> {processingId === row.id ? '...' : 'Setujui'}
+                        </Button>
+                      )}
+
                       <Button
                         type="button"
                         variant="danger"
@@ -220,14 +233,25 @@ const Approval = () => {
               ]}
               actions={
                 <>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => handleApprove(row)}
-                    disabled={processingId === row.id}
-                  >
-                    <CheckIcon /> {processingId === row.id ? '...' : 'Setujui'}
-                  </Button>
+                  {row.status === 'approval_review' ? (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={() => navigate(`/approval/${row.id}/finalize`)}
+                      disabled={processingId === row.id}
+                    >
+                      <CheckIcon /> Lanjut Review
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => handleApprove(row)}
+                      disabled={processingId === row.id}
+                    >
+                      <CheckIcon /> {processingId === row.id ? '...' : 'Setujui'}
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="danger"

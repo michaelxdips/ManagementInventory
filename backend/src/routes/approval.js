@@ -21,7 +21,7 @@ router.get('/', authenticate, authorize('admin', 'superadmin'), async (req, res)
         LOWER(r.status) as status
       FROM requests r
       LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
-      WHERE r.status = 'PENDING'
+      WHERE r.status IN ('PENDING', 'APPROVAL_REVIEW')
       ORDER BY r.created_at DESC
     `);
 
@@ -161,44 +161,8 @@ router.get('/:id/detail', authenticate, authorize('admin', 'superadmin'), async 
         //     return res.status(400).json({ message: `Request tidak dalam status review. Status saat ini: ${request.status}` });
         // }
 
-        // Resolve unit_id from dept name
-        let unitId = null;
-        if (request.dept) {
-            const [unitRows] = await pool.query("SELECT id FROM users WHERE name = ? AND role = 'user'", [request.dept]);
-            if (unitRows.length > 0) unitId = unitRows[0].id;
-        }
-
-        // Fetch quota for this item + unit
-        let quotaInfo = { quota_max: null, quota_used: 0, quota_remaining: null };
-        if (request.item_id && unitId) {
-            const [quotaRows] = await pool.query(
-                'SELECT quota_max, quota_used FROM unit_quota WHERE item_id = ? AND unit_id = ?',
-                [request.item_id, unitId]
-            );
-            if (quotaRows.length > 0) {
-                quotaInfo.quota_max = quotaRows[0].quota_max;
-                quotaInfo.quota_used = quotaRows[0].quota_used;
-                quotaInfo.quota_remaining = quotaRows[0].quota_max - quotaRows[0].quota_used;
-            }
-        }
-
-        // Calculate fair share (R4): stock / number of units that have quota for this item
-        let fairShare = null;
-        if (request.item_id) {
-            const [countRows] = await pool.query(
-                'SELECT COUNT(*) as cnt FROM unit_quota WHERE item_id = ?',
-                [request.item_id]
-            );
-            const totalUnits = countRows[0].cnt || 1;
-            fairShare = Math.max(1, Math.floor(request.stok_tersedia / totalUnits));
-        }
-
         res.json({
-            ...request,
-            quota_max: quotaInfo.quota_max,
-            quota_used: quotaInfo.quota_used,
-            quota_remaining: quotaInfo.quota_remaining,
-            fair_share: fairShare
+            ...request
         });
     } catch (error) {
         console.error('Get approval detail error:', error);
@@ -302,52 +266,20 @@ router.post('/:id/finalize', authenticate, authorize('admin', 'superadmin'), asy
             return res.status(400).json({ message: 'Stok tidak boleh negatif' });
         }
 
-        // Step 5b: Resolve unit_id from dept name
-        let unitId = null;
-        if (request.dept) {
-            const [unitRows] = await connection.query("SELECT id FROM users WHERE name = ? AND role = 'user'", [request.dept]);
-            if (unitRows.length > 0) unitId = unitRows[0].id;
-        }
-
-        // Step 5c: Validate quota (R3 - HARD LIMIT)
-        let quotaRow = null;
-        if (unitId) {
-            const [quotaRows] = await connection.query(
-                'SELECT * FROM unit_quota WHERE item_id = ? AND unit_id = ? FOR UPDATE',
-                [item.id, unitId]
-            );
-            if (quotaRows.length > 0) {
-                quotaRow = quotaRows[0];
-                const remaining = quotaRow.quota_max - quotaRow.quota_used;
-                if (qty > remaining) {
-                    await connection.rollback();
-                    return res.status(400).json({
-                        message: `Melebihi jatah unit. Sisa jatah: ${remaining}, Diminta: ${qty}`
-                    });
-                }
-            }
-        }
-
         // Step 6: Update request status to APPROVED
         await connection.execute('UPDATE requests SET status = ? WHERE id = ?', ['APPROVED', id]);
 
         // Step 7: REDUCE stock
         await connection.execute('UPDATE atk_items SET qty = ? WHERE id = ?', [newQty, item.id]);
 
-        // Step 7b: Update quota_used if quota exists
-        if (quotaRow) {
-            await connection.execute(
-                'UPDATE unit_quota SET quota_used = quota_used + ? WHERE id = ?',
-                [qty, quotaRow.id]
-            );
-        }
+
 
         // Step 8: Record barang keluar with FINAL qty (not original request qty)
-        const today = getWIBDate();
+        // Use request.date (Tanggal Ambil) instead of current date (Tanggal Approval)
         await connection.execute(`
             INSERT INTO barang_keluar (date, atk_item_id, nama_barang, kode_barang, qty, satuan, penerima, dept)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [today, item.id, item.nama_barang, item.kode_barang, qty, item.satuan, request.receiver, request.dept]);
+        `, [request.date, item.id, item.nama_barang, item.kode_barang, qty, item.satuan, request.receiver, request.dept]);
 
         await connection.commit();
 

@@ -13,7 +13,7 @@ import Information from '../pages/Information';
 import Login from '../pages/auth/Login';
 import ManageUnits from '../pages/ManageUnits';
 import ManageUnitsCreate from '../pages/ManageUnitsCreate';
-import ManageQuota from '../pages/ManageQuota';
+// import ManageQuota from '../pages/ManageQuota'; // REMOVED
 import PasswordSettings from '../pages/PasswordSettings';
 import ProfileSettings from '../pages/ProfileSettings';
 import Requests from '../pages/Requests';
@@ -61,7 +61,6 @@ const AppRoutes = () => {
 					<Route element={<RoleRoute allow={["superadmin"]} />}>
 						<Route path="/manage-units" element={<ManageUnits />} />
 						<Route path="/manage-units/create" element={<ManageUnitsCreate />} />
-						<Route path="/manage-quota" element={<ManageQuota />} />
 					</Route>
 				</Route>
 			</Route>
