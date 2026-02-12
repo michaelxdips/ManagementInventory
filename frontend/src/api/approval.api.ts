@@ -29,6 +29,11 @@ export type ApprovalDetail = {
   lokasi_barang: string;
   stok_tersedia: number;
   satuan: string;
+  // Quota fields
+  quota_max: number | null;
+  quota_used: number;
+  quota_remaining: number | null;
+  fair_share: number | null;
 };
 
 export type ReviewResponse = {

@@ -65,6 +65,13 @@ export const Icon = ({ name }: { name: string }) => {
                     <path d="M4 10h7V4H4v6Zm9 10h7v-6h-7v6ZM4 20h7v-6H4v6Zm9-10h7V4h-7v6Z" />
                 </svg>
             );
+        case 'quota':
+            return (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9" />
+                    <path d="M12 3v9l6.36 3.64" />
+                </svg>
+            );
         case 'menu':
             return (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.5">

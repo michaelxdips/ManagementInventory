@@ -100,6 +100,22 @@ const seed = async () => {
       );
     `);
 
+    // Unit Quota table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS unit_quota (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        item_id INTEGER NOT NULL,
+        unit_id INTEGER NOT NULL,
+        quota_max INTEGER NOT NULL DEFAULT 0,
+        quota_used INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (item_id) REFERENCES atk_items(id),
+        FOREIGN KEY (unit_id) REFERENCES users(id),
+        UNIQUE KEY uq_item_unit (item_id, unit_id)
+      );
+    `);
+
     // Clear existing data (in reverse order of dependencies)
     console.log('Clearing existing data...');
     await connection.query('DELETE FROM barang_keluar');
