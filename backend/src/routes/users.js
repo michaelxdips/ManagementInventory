@@ -105,6 +105,9 @@ router.delete('/account', authenticate, async (req, res) => {
             });
         }
 
+        // Delete associated unit quotas first
+        await pool.execute('DELETE FROM unit_quota WHERE unit_id = ?', [req.user.id]);
+
         await pool.execute('DELETE FROM users WHERE id = ?', [req.user.id]);
 
         res.status(204).send();

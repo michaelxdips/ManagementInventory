@@ -100,6 +100,31 @@ const ApprovalFinalize = () => {
         }
     };
 
+    const handleStartReview = async () => {
+        if (!id) return;
+        setSubmitting(true);
+        try {
+            // Import reviewRequest explicitly if not available in closure, but we'll use the one from api
+            const { reviewRequest } = await import('../api/approval.api');
+            await reviewRequest(parseInt(id));
+            // Reload details to refresh status
+            const data = await fetchApprovalDetail(parseInt(id));
+            setDetail(data);
+            setSuccess('Status diupdate ke Review. Silakan lanjutkan.');
+        } catch (err: any) {
+            let msg = 'Gagal update status';
+            try {
+                const parsed = JSON.parse(err.message);
+                msg = parsed.message || msg;
+            } catch {
+                msg = err.message || msg;
+            }
+            setError(msg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="history-page">
@@ -132,7 +157,9 @@ const ApprovalFinalize = () => {
         <div className="history-page">
             <div className="history-card" style={{ maxWidth: '600px' }}>
                 <h2 className="history-title" style={{ color: 'var(--text-muted)' }}>
-                    Barang yang Akan Keluar
+                    {detail && (detail.status === 'APPROVED' || detail.status === 'FINISHED')
+                        ? 'Detail Barang Keluar'
+                        : 'Review Barang Keluar'}
                 </h2>
 
                 {success && (
@@ -150,6 +177,20 @@ const ApprovalFinalize = () => {
 
                 {detail && (
                     <form onSubmit={handleSubmit} className="edit-form">
+                        {/* Warning if PENDING */}
+                        {detail.status === 'PENDING' && (
+                            <div style={{
+                                padding: '12px',
+                                background: '#fff3cd',
+                                color: '#856404',
+                                borderRadius: '6px',
+                                marginBottom: '16px',
+                                fontSize: '14px'
+                            }}>
+                                ⚠️ Permintaan ini masih <strong>PENDING</strong>. Klik "Mulai Review" untuk memproses.
+                            </div>
+                        )}
+
                         {/* Nama Barang (readonly) */}
                         <div className="form-group">
                             <label style={{ color: 'var(--text-muted)' }}>Nama Barang</label>
@@ -218,9 +259,9 @@ const ApprovalFinalize = () => {
                             </div>
                         )}
 
-                        {/* Jumlah (editable) */}
+                        {/* Jumlah (editable ONLY if APPROVAL_REVIEW) */}
                         <div className="form-group">
-                            <label style={{ color: 'var(--text-muted)' }}>Jumlah</label>
+                            <label style={{ color: 'var(--text-muted)' }}>Jumlah Disetujui</label>
                             <input
                                 type="number"
                                 min="1"
@@ -232,20 +273,23 @@ const ApprovalFinalize = () => {
                                 value={finalQty}
                                 onChange={handleQtyChange}
                                 required
+                                readOnly={detail.status !== 'APPROVAL_REVIEW'}
                                 style={{
                                     borderColor: validationError ? '#c63d3d' : undefined,
+                                    background: detail.status !== 'APPROVAL_REVIEW' ? 'var(--surface-alt)' : undefined,
+                                    cursor: detail.status !== 'APPROVAL_REVIEW' ? 'not-allowed' : 'text'
                                 }}
                             />
                             <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                Stok tersedia: {detail.stok_tersedia}
+                                Permintaan asli: {detail.requestQty} · Stok: {detail.stok_tersedia}
                                 {detail.quota_remaining !== null && ` · Sisa jatah: ${detail.quota_remaining}`}
                             </span>
-                            {validationError && (
+                            {detail.status === 'APPROVAL_REVIEW' && validationError && (
                                 <span style={{ fontSize: '13px', color: '#f1c7c7', marginTop: '2px' }}>
                                     {validationError}
                                 </span>
                             )}
-                            {fairnessWarning && (
+                            {detail.status === 'APPROVAL_REVIEW' && fairnessWarning && (
                                 <span style={{ fontSize: '13px', color: '#fbbf24', marginTop: '4px', display: 'block' }}>
                                     {fairnessWarning}
                                 </span>
@@ -273,12 +317,34 @@ const ApprovalFinalize = () => {
                             >
                                 ← Kembali
                             </Button>
-                            <Button
-                                type="submit"
-                                disabled={submitting || !!validationError}
-                            >
-                                <SaveIcon /> {submitting ? 'Memproses...' : 'Selesai & Catat Barang Keluar'}
-                            </Button>
+
+                            {/* Show logic based on status */}
+                            {detail.status === 'PENDING' ? (
+                                <Button
+                                    type="button"
+                                    onClick={handleStartReview}
+                                    disabled={submitting}
+                                >
+                                    Mulai Review
+                                </Button>
+                            ) : detail.status === 'APPROVAL_REVIEW' ? (
+                                <Button
+                                    type="submit"
+                                    disabled={submitting || !!validationError}
+                                >
+                                    <SaveIcon /> {submitting ? 'Memproses...' : 'Selesai & Catat Barang Keluar'}
+                                </Button>
+                            ) : (
+                                <div style={{
+                                    padding: '8px 12px',
+                                    background: 'var(--surface-alt)',
+                                    borderRadius: '4px',
+                                    fontSize: '14px',
+                                    fontWeight: 600
+                                }}>
+                                    Status: {detail.status}
+                                </div>
+                            )}
                         </div>
                     </form>
                 )}

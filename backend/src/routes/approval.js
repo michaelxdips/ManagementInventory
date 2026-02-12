@@ -155,9 +155,11 @@ router.get('/:id/detail', authenticate, authorize('admin', 'superadmin'), async 
 
         const request = rows[0];
 
-        if (request.status !== 'APPROVAL_REVIEW') {
-            return res.status(400).json({ message: `Request tidak dalam status review. Status saat ini: ${request.status}` });
-        }
+        // REMOVED STRICT CHECK to allow viewing details for PENDING/APPROVED requests
+        // logic moved to frontend
+        // if (request.status !== 'APPROVAL_REVIEW') {
+        //     return res.status(400).json({ message: `Request tidak dalam status review. Status saat ini: ${request.status}` });
+        // }
 
         // Resolve unit_id from dept name
         let unitId = null;

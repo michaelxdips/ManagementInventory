@@ -46,6 +46,10 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
             return res.status(400).json({ message: 'Semua field wajib diisi' });
         }
 
+        if (qty <= 0) {
+            return res.status(400).json({ message: 'Jumlah permintaan harus lebih dari 0' });
+        }
+
         // FIX: Validate item exists in inventory (Case Insensitive) AND use correct name
         const [itemRows] = await pool.query('SELECT nama_barang, satuan FROM atk_items WHERE LOWER(nama_barang) = LOWER(?)', [item]);
 

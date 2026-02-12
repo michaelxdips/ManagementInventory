@@ -9,18 +9,25 @@ export type HttpError = {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers ?? {}),
+    ...(options.headers as Record<string, string> ?? {}),
   };
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const res = await fetch(url, { ...options, headers });
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
     const text = await res.text();
     throw { status: res.status, message: text || res.statusText } as HttpError;
   }
