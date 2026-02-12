@@ -46,7 +46,7 @@ const seed = async () => {
         unit VARCHAR(50) NOT NULL,
         receiver VARCHAR(255) NOT NULL,
         dept VARCHAR(255) NOT NULL,
-        status ENUM('PENDING', 'APPROVED', 'REJECTED', 'FINISHED') NOT NULL DEFAULT 'PENDING',
+        status ENUM('PENDING', 'APPROVAL_REVIEW', 'APPROVED', 'REJECTED', 'FINISHED') NOT NULL DEFAULT 'PENDING',
         user_id INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)

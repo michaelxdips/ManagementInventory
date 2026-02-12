@@ -1070,6 +1070,11 @@ a {
   color: #1f7a1f;
 }
 
+.badge-review {
+  background: #d6e8f5;
+  color: #1a5276;
+}
+
 /* Buttons */
 .btn-base {
   border: 1px solid var(--border);

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
-import { approveRequest, fetchApproval, rejectRequest, ApprovalItem } from '../api/approval.api';
+import { reviewRequest, fetchApproval, rejectRequest, ApprovalItem } from '../api/approval.api';
 import { formatDateV2 } from '../utils/dateUtils';
 
 const CheckIcon = () => (
@@ -21,16 +22,19 @@ const XIcon = () => (
 const toBadgeVariant = (status: ApprovalItem['status']) => {
   if (status === 'approved') return 'approved';
   if (status === 'rejected') return 'rejected';
+  if (status === 'approval_review') return 'review';
   return 'pending';
 };
 
 const formatStatus = (status: ApprovalItem['status']) => {
   if (status === 'approved') return 'Approved';
   if (status === 'rejected') return 'Rejected';
+  if (status === 'approval_review') return 'Review';
   return 'Pending';
 };
 
 const Approval = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -78,11 +82,18 @@ const Approval = () => {
   const handleApprove = async (item: ApprovalItem) => {
     setProcessingId(item.id);
     try {
-      const result = await approveRequest(item.id);
-      setStatusMessage(result.message || `Permintaan ${item.name} disetujui. Stok berkurang.`);
-      loadData();
+      // Step 1: Move to APPROVAL_REVIEW status (no stock change)
+      await reviewRequest(item.id);
+      // Step 2: Redirect to finalize page
+      navigate(`/approval/${item.id}/finalize`);
     } catch (err: any) {
-      setError(err.message || 'Gagal menyetujui permintaan');
+      const msg = err.message || 'Gagal memproses permintaan';
+      try {
+        const parsed = JSON.parse(msg);
+        setError(parsed.message || msg);
+      } catch {
+        setError(msg);
+      }
     } finally {
       setProcessingId(null);
     }
@@ -196,7 +207,7 @@ const Approval = () => {
               header={
                 <>
                   <span className="mobile-card-header-title">{row.name}</span>
-                  <span className="badge badge-pending">Pending</span>
+                  <Badge variant={toBadgeVariant(row.status)}>{formatStatus(row.status)}</Badge>
                 </>
               }
               fields={[

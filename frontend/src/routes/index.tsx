@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { LayoutSwitcher } from '../components/Layout';
 import GuestLayout from '../layouts/GuestLayout';
 import Approval from '../pages/Approval';
+import ApprovalFinalize from '../pages/ApprovalFinalize';
 import AtkItems from '../pages/AtkItems';
 import BarangKosong from '../pages/BarangKosong';
 import BarangMasukCreate from '../pages/BarangMasukCreate';
@@ -43,7 +44,6 @@ const AppRoutes = () => {
 						<Route path="/requests" element={<Requests />} />
 						<Route path="/requests/create" element={<RequestsCreate />} />
 						<Route path="/information" element={<Information />} />
-						<Route path="/barang-kosong" element={<BarangKosong />} />
 					</Route>
 
 					{/* Admin/Superadmin role routes */}
@@ -51,7 +51,9 @@ const AppRoutes = () => {
 						<Route path="/barang-masuk/create" element={<BarangMasukCreate />} />
 						<Route path="/history-masuk" element={<HistoryMasuk />} />
 						<Route path="/history-keluar" element={<HistoryKeluar />} />
+						<Route path="/barang-kosong" element={<BarangKosong />} />
 						<Route path="/approval" element={<Approval />} />
+						<Route path="/approval/:id/finalize" element={<ApprovalFinalize />} />
 					</Route>
 
 					{/* Superadmin only routes */}

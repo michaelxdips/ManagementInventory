@@ -47,11 +47,14 @@ const Information = () => {
     const s = (status || '').toUpperCase();
     if (s === 'APPROVED') return 'approved';
     if (s === 'REJECTED') return 'rejected';
+    if (s === 'APPROVAL_REVIEW') return 'review';
     return 'pending';
   };
 
   const formatStatus = (status?: string) => {
     if (!status) return '-';
+    const s = status.toUpperCase();
+    if (s === 'APPROVAL_REVIEW') return 'Review';
     return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
