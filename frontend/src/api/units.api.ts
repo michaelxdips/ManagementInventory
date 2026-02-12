@@ -13,4 +13,6 @@ export type CreateUnitPayload = {
 };
 
 export const fetchUnits = () => http.get<UnitItem[]>('/units');
+export const fetchUnitNames = () => http.get<string[]>('/units/names');
 export const createUnit = (payload: CreateUnitPayload) => http.post<UnitItem>('/units', payload);
+export const deleteUnit = (id: number) => http.delete<void>(`/units/${id}`);

@@ -5,6 +5,19 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
+// GET /api/units/names - List unit names only (for dropdown in request form) - ALL AUTHENTICATED USERS
+router.get('/names', authenticate, async (req, res) => {
+    try {
+        const [units] = await pool.query(`
+      SELECT name FROM users WHERE role = 'user' ORDER BY name ASC
+    `);
+        res.json(units.map((u) => u.name));
+    } catch (error) {
+        console.error('Get unit names error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 // GET /api/units - List all units (users with role 'user') - SUPERADMIN ONLY
 router.get('/', authenticate, authorize('superadmin'), async (req, res) => {
     try {

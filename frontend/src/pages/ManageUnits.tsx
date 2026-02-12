@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
-import { fetchUnits, UnitItem } from '../api/units.api';
+import { fetchUnits, deleteUnit, UnitItem } from '../api/units.api';
 
 const UserPlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -13,36 +13,71 @@ const UserPlusIcon = () => (
   </svg>
 );
 
+const TrashIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
 const ManageUnits = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<UnitItem | null>(null);
   const refreshFlag = (location.state as { refresh?: boolean } | null)?.refresh;
 
-  useEffect(() => {
-    let mounted = true;
+  const loadData = () => {
     setLoading(true);
     fetchUnits()
       .then((rows) => {
-        if (!mounted) return;
         setUnits(rows);
         setError(null);
       })
       .catch((err) => {
-        if (!mounted) return;
         setUnits([]);
         setError(err.message || 'Gagal memuat data unit dari server');
       })
-      .finally(() => {
-        if (!mounted) return;
-        setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, [refreshFlag]);
+
+  useEffect(() => {
+    if (!statusMessage) return;
+    const timer = setTimeout(() => setStatusMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [statusMessage]);
+
+  const handleDelete = async () => {
+    if (!confirmTarget) return;
+    setDeletingId(confirmTarget.id);
+    setConfirmTarget(null);
+    try {
+      await deleteUnit(confirmTarget.id);
+      setStatusMessage(`Unit "${confirmTarget.name}" berhasil dihapus`);
+      loadData();
+    } catch (err: any) {
+      let msg = 'Gagal menghapus unit';
+      try {
+        const parsed = JSON.parse(err.message);
+        msg = parsed.message || msg;
+      } catch {
+        msg = err.message || msg;
+      }
+      setError(msg);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="history-page">
@@ -55,6 +90,17 @@ const ManageUnits = () => {
       </div>
 
       <div className="history-card">
+        {statusMessage && (
+          <div style={{
+            padding: '12px 16px',
+            background: 'var(--success-bg, #d4edda)',
+            color: 'var(--success-text, #155724)',
+            borderRadius: '6px',
+            marginBottom: '16px'
+          }}>
+            {statusMessage}
+          </div>
+        )}
         {error && <p className="danger-text" role="alert">{error}</p>}
         <Table>
           <THead>
@@ -62,16 +108,17 @@ const ManageUnits = () => {
               <TH style={{ width: '52px' }}>No</TH>
               <TH>Nama Unit</TH>
               <TH style={{ width: '180px' }}>Username</TH>
+              <TH style={{ width: '100px' }}>Aksi</TH>
             </TR>
           </THead>
           <TBody>
             {loading ? (
               <TR>
-                <TD colSpan={3} className="empty-row">Memuat data...</TD>
+                <TD colSpan={4} className="empty-row">Memuat data...</TD>
               </TR>
             ) : units.length === 0 ? (
               <TR>
-                <TD colSpan={3} className="empty-row">Belum ada unit</TD>
+                <TD colSpan={4} className="empty-row">Belum ada unit</TD>
               </TR>
             ) : (
               units.map((row, idx) => (
@@ -79,6 +126,17 @@ const ManageUnits = () => {
                   <TD>{idx + 1}</TD>
                   <TD>{row.name}</TD>
                   <TD>{row.username}</TD>
+                  <TD>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setConfirmTarget(row)}
+                      disabled={deletingId === row.id}
+                    >
+                      <TrashIcon /> {deletingId === row.id ? '...' : 'Hapus'}
+                    </Button>
+                  </TD>
                 </TR>
               ))
             )}
@@ -101,10 +159,42 @@ const ManageUnits = () => {
                 { label: 'No', value: idx + 1 },
                 { label: 'Username', value: row.username },
               ]}
+              actions={
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setConfirmTarget(row)}
+                  disabled={deletingId === row.id}
+                >
+                  <TrashIcon /> {deletingId === row.id ? '...' : 'Hapus'}
+                </Button>
+              }
             />
           ))}
         </MobileCardList>
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmTarget && (
+        <div className="modal-backdrop" onClick={() => setConfirmTarget(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <p className="modal-kicker">Konfirmasi Hapus</p>
+            <h3 className="modal-title">Hapus Unit "{confirmTarget.name}"?</h3>
+            <p className="modal-text">
+              Akun user <strong>{confirmTarget.username}</strong> akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
+            </p>
+            <div className="modal-actions">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmTarget(null)}>
+                Batal
+              </Button>
+              <Button type="button" variant="danger" size="sm" onClick={handleDelete}>
+                <TrashIcon /> Hapus
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

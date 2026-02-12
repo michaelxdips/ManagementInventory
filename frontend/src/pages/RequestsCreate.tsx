@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { createRequest } from '../api/requests.api';
+import { fetchUnitNames } from '../api/units.api';
 
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -19,9 +20,16 @@ const RequestsCreate = () => {
     receiver: '',
     dept: '',
   });
+  const [unitOptions, setUnitOptions] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchUnitNames()
+      .then((names) => setUnitOptions(names))
+      .catch(() => setUnitOptions([]));
+  }, []);
 
   const handleChange = (field: keyof typeof formValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -104,7 +112,16 @@ const RequestsCreate = () => {
           </label>
           <label className="form-field">
             <span className="form-label">Unit</span>
-            <input className="input-control" value={formValues.dept} onChange={(e) => handleChange('dept', e.target.value)} />
+            <select
+              className="input-control"
+              value={formValues.dept}
+              onChange={(e) => handleChange('dept', e.target.value)}
+            >
+              <option value="">-- Pilih Unit --</option>
+              {unitOptions.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
           </label>
 
           <div className="form-actions form-actions-wide">

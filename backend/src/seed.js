@@ -119,6 +119,9 @@ const seed = async () => {
       { name: 'Performance, Risk & QOS', username: 'prq', password: 'user123', role: 'user' },
       { name: 'Finance', username: 'finance', password: 'user123', role: 'user' },
       { name: 'IT Support', username: 'itsupport', password: 'user123', role: 'user' },
+      { name: 'Lgs', username: 'lgs', password: 'user123', role: 'user' },
+      { name: 'bs', username: 'bs', password: 'user123', role: 'user' },
+      { name: 'pai', username: 'pai', password: 'user123', role: 'user' },
 
     ];
 

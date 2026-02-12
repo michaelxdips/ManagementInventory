@@ -56,7 +56,14 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
         }
 
         const validItemName = itemRows[0].nama_barang;
-        // Optional: Enforce unit consistency? For now just trusting user/frontend input but corrected name is key.
+
+        // Validate dept exists as a registered unit
+        const [deptRows] = await pool.query('SELECT id FROM users WHERE name = ? AND role = ?', [dept, 'user']);
+        if (deptRows.length === 0) {
+            return res.status(400).json({
+                message: `Unit "${dept}" tidak terdaftar di sistem.`
+            });
+        }
 
         const [result] = await pool.execute(`
       INSERT INTO requests (date, item, qty, unit, receiver, dept, status, user_id)

@@ -82,7 +82,7 @@ const HistoryKeluar = () => {
   return (
     <div className="history-page">
       <div className="history-card">
-        <h2 className="history-title">Daftar Barang Keluar</h2>
+        <h2 className="history-title">History Barang Keluar</h2>
         <div className="history-filters">
           {error && <p className="danger-text" role="alert">{error}</p>}
           <div className="filter-group">
