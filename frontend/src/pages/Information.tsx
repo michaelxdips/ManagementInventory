@@ -4,6 +4,7 @@ import Pagination from '../components/ui/Pagination';
 import Badge from '../components/ui/Badge';
 import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchHistoryUser, HistoryEntry } from '../api/history.api';
+import { formatDateV2 } from '../utils/dateUtils';
 
 const Information = () => {
   const [data, setData] = useState<HistoryEntry[]>([]);
@@ -86,7 +87,7 @@ const Information = () => {
               displayItems.map((item, idx) => (
                 <TR key={item.id}>
                   <TD>{startIndex + idx + 1}</TD>
-                  <TD>{item.date}</TD>
+                  <TD>{formatDateV2(item.date)}</TD>
                   <TD>{item.name}</TD>
                   <TD>{item.code || '-'}</TD>
                   <TD>{item.qty}</TD>
@@ -122,7 +123,7 @@ const Information = () => {
               }
               fields={[
                 { label: 'No', value: startIndex + idx + 1 },
-                { label: 'Tanggal', value: item.date },
+                { label: 'Tanggal', value: formatDateV2(item.date) },
                 { label: 'Kode', value: item.code || '-' },
                 { label: 'Jumlah', value: `${item.qty} ${item.unit}` },
                 { label: 'Penerima', value: item.receiver || '-' },
