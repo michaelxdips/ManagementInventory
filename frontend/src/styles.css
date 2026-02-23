@@ -101,37 +101,15 @@ a {
 }
 
 .auth-icon {
-  width: 44px;
-  height: 44px;
-  border: 2px solid var(--primary);
+  width: 52px;
+  height: 52px;
   border-radius: 12px;
-  display: grid;
-  place-items: center;
-  position: relative;
+  background-image: url('/logo.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
   margin-bottom: 20px;
-}
-
-.auth-icon::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 12px;
-  right: 12px;
-  height: 4px;
-  border-radius: 4px;
-  background: var(--primary);
-}
-
-.auth-icon::after {
-  content: '';
-  position: absolute;
-  top: 14px;
-  left: 12px;
-  right: 12px;
-  height: 18px;
-  border-radius: 8px;
-  border: 2px solid var(--primary);
-  border-top: 0;
 }
 
 .auth-title {
@@ -279,32 +257,12 @@ a {
 .brand-icon {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
-  border: 2px solid var(--primary);
-  position: relative;
-}
-
-.brand-icon::before,
-.brand-icon::after {
-  content: '';
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  background: var(--primary);
-  border-radius: 6px;
-}
-
-.brand-icon::before {
-  top: 9px;
-  height: 5px;
-}
-
-.brand-icon::after {
-  top: 16px;
-  height: 14px;
-  border: 2px solid var(--primary);
-  background: transparent;
-  border-top: 0;
+  border-radius: 8px;
+  background-image: url('/logo.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
 }
 
 .brand-title {

@@ -57,7 +57,6 @@ const ApprovalFinalize = () => {
         if (finalQty <= 0) return 'Jumlah harus lebih dari 0';
         if (finalQty > detail.requestQty) return `Jumlah tidak boleh melebihi permintaan (${detail.requestQty})`;
         if (finalQty > detail.stok_tersedia) return `Jumlah tidak boleh melebihi stok tersedia (${detail.stok_tersedia})`;
-        if (finalQty > detail.stok_tersedia) return `Jumlah tidak boleh melebihi stok tersedia (${detail.stok_tersedia})`;
         // Fair share removed
         return null;
     };

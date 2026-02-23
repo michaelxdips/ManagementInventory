@@ -17,8 +17,6 @@ import requestsRoutes from './routes/requests.js';
 import unitsRoutes from './routes/units.js';
 import barangKosongRoutes from './routes/barangKosong.js';
 import usersRoutes from './routes/users.js';
-import usersRoutes from './routes/users.js';
-import usersRoutes from './routes/users.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,11 +40,7 @@ app.use(limiter);
 
 app.use(express.json());
 
-// Request logging
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
-});
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -58,8 +52,6 @@ app.use('/api/history', historyRoutes);
 app.use('/api/requests', requestsRoutes);
 app.use('/api/units', unitsRoutes);
 app.use('/api/barang-kosong', barangKosongRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/users', usersRoutes);
 app.use('/api/users', usersRoutes);
 
 // API Documentation
