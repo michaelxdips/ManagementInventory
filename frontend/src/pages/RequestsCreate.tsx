@@ -57,8 +57,18 @@ const RequestsCreate = () => {
         showToast('Request ATK berhasil dibuat', 'success');
         setFormValues({ item: '', date: '', qty: '', unit: '', receiver: '', dept: isUserRole && user?.name ? user.name : '' });
       })
-      .catch(() => {
-        showToast('Gagal menyimpan ke server');
+      .catch((err: any) => {
+        // Parse backend error message (http.ts throws { status, message } as text)
+        let msg = 'Gagal menyimpan ke server';
+        if (err?.message) {
+          try {
+            const parsed = JSON.parse(err.message);
+            msg = parsed.message || msg;
+          } catch {
+            msg = err.message;
+          }
+        }
+        showToast(msg);
       })
       .finally(() => setSaving(false));
   };
