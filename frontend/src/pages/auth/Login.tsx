@@ -1,31 +1,31 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import { useToast } from '../../components/ui/Toast';
 
 const Login = () => {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [remember, setRemember] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const { login } = useAuth();
 	const navigate = useNavigate();
+	const { showToast } = useToast();
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (!username.trim() || !password.trim()) {
-			setError('Username dan password wajib diisi');
+			showToast('Username dan password wajib diisi');
 			return;
 		}
 		if (password.length < 4) {
-			setError('Password minimal 4 karakter');
+			showToast('Password minimal 4 karakter');
 			return;
 		}
-		setError(null);
 		setSubmitting(true);
 		login({ username, password, remember })
 			.then(() => navigate('/dashboard'))
-			.catch(() => setError('Login gagal, periksa kembali kredensial'))
+			.catch(() => showToast('Login gagal, periksa kembali kredensial'))
 			.finally(() => setSubmitting(false));
 	};
 
@@ -36,7 +36,6 @@ const Login = () => {
 			<p className="auth-subtitle">Enter your username and password below to log in</p>
 
 			<form onSubmit={handleSubmit} noValidate>
-				{error && <p className="danger-text" role="alert">{error}</p>}
 				<div className="form-field">
 					<label className="form-label" htmlFor="username">
 						Username

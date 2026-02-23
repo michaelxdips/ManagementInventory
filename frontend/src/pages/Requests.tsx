@@ -7,6 +7,7 @@ import { MobileCard, MobileCardList } from '../components/ui/MobileCard';
 import { fetchRequests, RequestItem } from '../api/requests.api';
 import useAuth from '../hooks/useAuth';
 import { formatDateV2 } from '../utils/dateUtils';
+import { useToast } from '../components/ui/Toast';
 
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -17,10 +18,10 @@ const PlusIcon = () => (
 const Requests = () => {
   const [data, setData] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const isUser = hasRole(['user']);
+  const { showToast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -37,12 +38,11 @@ const Requests = () => {
           })
           : rows;
         setData(filtered);
-        setError(null);
       })
       .catch((err) => {
         if (!mounted) return;
         setData([]);
-        setError(err.message || 'Gagal memuat data dari server');
+        showToast(err.message || 'Gagal memuat data dari server');
       })
       .finally(() => {
         if (!mounted) return;
@@ -77,7 +77,6 @@ const Requests = () => {
       </div>
 
       <div className="history-card">
-        {error && <p className="danger-text" role="alert">{error}</p>}
         <Table>
           <THead>
             <TR>

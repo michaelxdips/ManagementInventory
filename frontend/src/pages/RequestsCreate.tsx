@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import { createRequest } from '../api/requests.api';
 import { fetchUnitNames } from '../api/units.api';
 import useAuth from '../hooks/useAuth';
+import { useToast } from '../components/ui/Toast';
 
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -15,6 +16,7 @@ const RequestsCreate = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isUserRole = user?.role === 'user';
+  const { showToast } = useToast();
   const [formValues, setFormValues] = useState({
     item: '',
     date: '',
@@ -24,7 +26,6 @@ const RequestsCreate = () => {
     dept: isUserRole && user?.name ? user.name : '',
   });
   const [unitOptions, setUnitOptions] = useState<string[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -42,26 +43,22 @@ const RequestsCreate = () => {
     e.preventDefault();
     const { item, date, qty, unit, receiver, dept } = formValues;
     if (!item || !date || !qty || !unit || !receiver || !dept) {
-      setFormError('Semua field wajib diisi');
-      setSuccess(null);
+      showToast('Semua field wajib diisi');
       return;
     }
     const qtyNumber = Number(qty);
     if (Number.isNaN(qtyNumber) || qtyNumber <= 0) {
-      setFormError('Jumlah harus lebih dari 0');
-      setSuccess(null);
+      showToast('Jumlah harus lebih dari 0');
       return;
     }
-    setFormError(null);
     setSaving(true);
     createRequest({ item, date, qty: qtyNumber, unit, receiver, dept })
       .then(() => {
-        setSuccess('Request ATK berhasil dibuat');
-        setFormValues({ item: '', date: '', qty: '', unit: '', receiver: '', dept: '' });
+        showToast('Request ATK berhasil dibuat', 'success');
+        setFormValues({ item: '', date: '', qty: '', unit: '', receiver: '', dept: isUserRole && user?.name ? user.name : '' });
       })
       .catch(() => {
-        setFormError('Gagal menyimpan ke server');
-        setSuccess(null);
+        showToast('Gagal menyimpan ke server');
       })
       .finally(() => setSaving(false));
   };
@@ -138,8 +135,6 @@ const RequestsCreate = () => {
 
           <div className="form-actions form-actions-wide">
             <div className="items-meta" aria-live="polite">
-              {formError && <span className="danger-text" role="alert">{formError}</span>}
-              {success && <span role="status">{success}</span>}
             </div>
             <Button type="submit" variant="secondary" disabled={saving}>
               <PlusIcon />

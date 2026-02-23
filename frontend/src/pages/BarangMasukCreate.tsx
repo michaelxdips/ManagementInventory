@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { createBarangMasuk } from '../api/barangMasuk.api';
+import { useToast } from '../components/ui/Toast';
 
 const BarangMasukCreate = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const [formData, setFormData] = useState({
         nama_barang: '',
         kode_barang: '',
@@ -15,22 +17,19 @@ const BarangMasukCreate = () => {
         tanggal: new Date().toISOString().split('T')[0],
     });
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.nama_barang || !formData.satuan || formData.qty <= 0) {
-            setError('Nama barang, jumlah, dan satuan wajib diisi');
+            showToast('Nama barang, jumlah, dan satuan wajib diisi');
             return;
         }
 
         setLoading(true);
-        setError(null);
         try {
             const result = await createBarangMasuk(formData);
-            setSuccess(result.message);
+            showToast(result.message, 'success');
             // Reset form
             setFormData({
                 nama_barang: '',
@@ -43,7 +42,7 @@ const BarangMasukCreate = () => {
             // Redirect after 2 seconds
             setTimeout(() => navigate('/history-masuk'), 2000);
         } catch (err: any) {
-            setError(err.message || 'Gagal mencatat barang masuk');
+            showToast(err.message || 'Gagal mencatat barang masuk');
         } finally {
             setLoading(false);
         }
@@ -57,18 +56,7 @@ const BarangMasukCreate = () => {
                     Catat barang yang masuk ke inventory untuk menambah stok.
                 </p>
 
-                {success && (
-                    <div style={{
-                        padding: '12px 16px',
-                        background: 'var(--success-bg, #d4edda)',
-                        color: 'var(--success-text, #155724)',
-                        borderRadius: '6px',
-                        marginBottom: '16px'
-                    }}>
-                        {success}
-                    </div>
-                )}
-                {error && <p className="danger-text" style={{ marginBottom: '16px' }}>{error}</p>}
+
 
                 <form onSubmit={handleSubmit} className="edit-form">
                     <div className="form-group">

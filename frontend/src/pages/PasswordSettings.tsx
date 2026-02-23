@@ -2,45 +2,40 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { updatePassword } from '../api/users.api';
+import { useToast } from '../components/ui/Toast';
 
 const PasswordSettings = () => {
 	const [currentPassword, setCurrentPassword] = useState('');
 	const [newPassword, setNewPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
-	const [message, setMessage] = useState<string | null>(null);
-	const [error, setError] = useState<string | null>(null);
+	const { showToast } = useToast();
 	const [saving, setSaving] = useState(false);
 
 	const handleSave = async () => {
 		if (!currentPassword || !newPassword || !confirmPassword) {
-			setError('Semua kolom wajib diisi');
-			setMessage(null);
+			showToast('Semua kolom wajib diisi');
 			return;
 		}
 		if (newPassword.length < 6) {
-			setError('Password baru minimal 6 karakter');
-			setMessage(null);
+			showToast('Password baru minimal 6 karakter');
 			return;
 		}
 		if (newPassword !== confirmPassword) {
-			setError('Konfirmasi password tidak cocok');
-			setMessage(null);
+			showToast('Konfirmasi password tidak cocok');
 			return;
 		}
 
-		setError(null);
-		setMessage(null);
 		setSaving(true);
 
 		try {
 			await updatePassword({ currentPassword, newPassword });
-			setMessage('Password berhasil diperbarui');
+			showToast('Password berhasil diperbarui', 'success');
 			// Reset form
 			setCurrentPassword('');
 			setNewPassword('');
 			setConfirmPassword('');
 		} catch (err: any) {
-			setError(err.response?.data?.message || 'Gagal memperbarui password');
+			showToast(err.response?.data?.message || 'Gagal memperbarui password');
 		} finally {
 			setSaving(false);
 		}
@@ -116,8 +111,6 @@ const PasswordSettings = () => {
 					</div>
 
 					<div className="settings-actions">
-						{message && <p className="items-meta" role="status">{message}</p>}
-						{error && <p className="danger-text" role="alert">{error}</p>}
 						<Button type="button" variant="primary" onClick={handleSave} disabled={saving}>Save password</Button>
 					</div>
 				</div>

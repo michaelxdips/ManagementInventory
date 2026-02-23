@@ -5,6 +5,7 @@ import Input from '../components/ui/Input';
 import useAuth from '../hooks/useAuth';
 import Modal from '../components/ui/Modal';
 import { updateProfile, deleteAccount } from '../api/users.api';
+import { useToast } from '../components/ui/Toast';
 
 const ProfileSettings = () => {
 	const { user, updateUser, logout } = useAuth();
@@ -13,7 +14,7 @@ const ProfileSettings = () => {
 	const [name, setName] = useState('');
 	const [username, setUsername] = useState('');
 	const [message, setMessage] = useState<string | null>(null);
-	const [error, setError] = useState<string | null>(null);
+	const { showToast } = useToast();
 	const [saving, setSaving] = useState(false);
 	const [showConfirm, setShowConfirm] = useState(false);
 
@@ -30,12 +31,12 @@ const ProfileSettings = () => {
 
 	const handleSave = async () => {
 		if (!name.trim() || !username.trim()) {
-			setError('Name dan Username wajib diisi');
+			showToast('Name dan Username wajib diisi');
 			setMessage(null);
 			return;
 		}
 
-		setError(null);
+
 		setMessage(null);
 		setSaving(true);
 
@@ -44,7 +45,7 @@ const ProfileSettings = () => {
 			updateUser(updatedUser); // Update context instantly
 			setMessage('Profil berhasil disimpan');
 		} catch (err: any) {
-			setError(err.response?.data?.message || 'Gagal menyimpan profil');
+			showToast(err.response?.data?.message || 'Gagal menyimpan profil');
 		} finally {
 			setSaving(false);
 		}
@@ -52,19 +53,19 @@ const ProfileSettings = () => {
 
 	const handleDelete = () => {
 		setDeletePassword('');
-		setError(null);
+
 		setShowConfirm(true);
 	};
 
 	const confirmDelete = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!deletePassword) {
-			setError('Password diperlukan untuk konfirmasi penghapusan');
+			showToast('Password diperlukan untuk konfirmasi penghapusan');
 			return;
 		}
 
 		setMessage(null);
-		setError(null);
+
 		setSaving(true);
 
 		try {
@@ -72,7 +73,7 @@ const ProfileSettings = () => {
 			await logout(); // Clear context and redirect
 			navigate('/login');
 		} catch (err: any) {
-			setError(err.response?.data?.message || 'Gagal menghapus akun. Password mungkin salah.');
+			showToast(err.response?.data?.message || 'Gagal menghapus akun. Password mungkin salah.');
 			setSaving(false);
 			// setShowConfirm(false); // Keep open on error so user can retry
 		}
@@ -81,7 +82,7 @@ const ProfileSettings = () => {
 	const cancelDelete = () => {
 		setShowConfirm(false);
 		setDeletePassword('');
-		setError(null);
+
 	};
 
 	return (
@@ -139,7 +140,7 @@ const ProfileSettings = () => {
 
 					<div className="settings-actions">
 						{message && <p className="items-meta" style={{ color: 'var(--success-text, #155724)' }} role="status">{message}</p>}
-						{error && <p className="danger-text" role="alert">{error}</p>}
+
 						<Button type="button" variant="primary" onClick={handleSave} disabled={saving}>
 							{saving ? 'Saving...' : 'Save'}
 						</Button>
@@ -178,7 +179,7 @@ const ProfileSettings = () => {
 						Tindakan ini tidak dapat dibatalkan. Masukkan password Anda untuk konfirmasi.
 					</p>
 
-					{error && <p className="danger-text" style={{ marginBottom: '8px' }}>{error}</p>}
+
 
 					<form id="delete-form" onSubmit={confirmDelete}>
 						<div className="form-group" style={{ marginTop: '16px' }}>

@@ -101,7 +101,7 @@ const ManageUnits = () => {
             {statusMessage}
           </div>
         )}
-        {error && <p className="danger-text" role="alert">{error}</p>}
+
         <Table>
           <THead>
             <TR>

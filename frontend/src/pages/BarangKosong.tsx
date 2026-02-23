@@ -68,7 +68,7 @@ const BarangKosong = () => {
       </div>
 
       <div className="history-card">
-        {error && <p className="danger-text" role="alert">{error}</p>}
+
         <Table>
           <THead>
             <TR>

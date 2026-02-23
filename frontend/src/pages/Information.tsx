@@ -63,7 +63,7 @@ const Information = () => {
       <div className="history-card">
         <h2 className="history-title">Riwayat Permintaan ATK</h2>
 
-        {error && <p className="danger-text" role="alert">{error}</p>}
+
         <Table>
           <THead>
             <TR>

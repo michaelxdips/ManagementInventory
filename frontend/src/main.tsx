@@ -5,6 +5,7 @@ import App from './App';
 import { ThemeProvider } from './theme';
 import './styles.css';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './components/ui/Toast';
 
 const rootElement = document.getElementById('root');
 
@@ -17,7 +18,9 @@ createRoot(rootElement).render(
 		<BrowserRouter>
 			<AuthProvider>
 				<ThemeProvider>
-					<App />
+					<ToastProvider>
+						<App />
+					</ToastProvider>
 				</ThemeProvider>
 			</AuthProvider>
 		</BrowserRouter>
