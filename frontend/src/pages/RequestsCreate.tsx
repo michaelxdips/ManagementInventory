@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { createRequest } from '../api/requests.api';
 import { fetchUnitNames } from '../api/units.api';
+import useAuth from '../hooks/useAuth';
 
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -12,13 +13,15 @@ const PlusIcon = () => (
 
 const RequestsCreate = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isUserRole = user?.role === 'user';
   const [formValues, setFormValues] = useState({
     item: '',
     date: '',
     qty: '',
     unit: '',
     receiver: '',
-    dept: '',
+    dept: isUserRole && user?.name ? user.name : '',
   });
   const [unitOptions, setUnitOptions] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
@@ -112,16 +115,25 @@ const RequestsCreate = () => {
           </label>
           <label className="form-field">
             <span className="form-label">Unit</span>
-            <select
-              className="input-control"
-              value={formValues.dept}
-              onChange={(e) => handleChange('dept', e.target.value)}
-            >
-              <option value="">-- Pilih Unit --</option>
-              {unitOptions.map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
+            {isUserRole ? (
+              <input
+                className="input-control"
+                value={formValues.dept}
+                disabled
+                style={{ backgroundColor: 'var(--bg-muted, #f0f0f0)', cursor: 'not-allowed' }}
+              />
+            ) : (
+              <select
+                className="input-control"
+                value={formValues.dept}
+                onChange={(e) => handleChange('dept', e.target.value)}
+              >
+                <option value="">-- Pilih Unit --</option>
+                {unitOptions.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            )}
           </label>
 
           <div className="form-actions form-actions-wide">

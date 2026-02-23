@@ -46,18 +46,58 @@ const Dashboard = () => {
 					<h2 className="card-title">User Dashboard</h2>
 					<p className="card-desc">Kelola permintaan barang ATK Anda di sini.</p>
 				</div>
-				<div className="dashboard-grid-user" style={{
-					display: 'grid',
-					gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-					gap: '24px',
-					alignItems: 'start'
-				}}>
-					<div style={{ minHeight: '400px' }}>
-						<UserRequestList refreshTrigger={refreshTrigger} />
-					</div>
-					<div style={{ minHeight: '400px' }}>
-						<UserRequestForm onSuccess={() => setRefreshTrigger(n => n + 1)} />
-					</div>
+				<div className="card-grid">
+					<article className="dash-card">
+						<div>
+							<p className="card-kicker">Dashboard</p>
+							<h2 className="card-title">Riwayat Permintaan</h2>
+							<p className="card-desc">Lihat status permintaan ATK yang sudah diproses.</p>
+						</div>
+						<Button
+							type="button"
+							variant="secondary"
+							className="card-cta"
+							aria-label="Lihat Riwayat"
+							onClick={() => navigate('/information')}
+						>
+							<span className="cta-text">Lihat</span>
+							<span className="cta-icon" aria-hidden><ArrowIcon /></span>
+						</Button>
+					</article>
+					<article className="dash-card">
+						<div>
+							<p className="card-kicker">Dashboard</p>
+							<h2 className="card-title">Buat Permintaan Baru</h2>
+							<p className="card-desc">Ajukan permintaan barang ATK baru.</p>
+						</div>
+						<Button
+							type="button"
+							variant="secondary"
+							className="card-cta"
+							aria-label="Buat Request"
+							onClick={() => navigate('/requests/create')}
+						>
+							<span className="cta-text">Buat Request</span>
+							<span className="cta-icon" aria-hidden><ArrowIcon /></span>
+						</Button>
+					</article>
+					<article className="dash-card">
+						<div>
+							<p className="card-kicker">Dashboard</p>
+							<h2 className="card-title">Daftar Barang</h2>
+							<p className="card-desc">Lihat semua barang ATK yang tersedia.</p>
+						</div>
+						<Button
+							type="button"
+							variant="secondary"
+							className="card-cta"
+							aria-label="Lihat Barang"
+							onClick={() => navigate('/items')}
+						>
+							<span className="cta-text">Lihat</span>
+							<span className="cta-icon" aria-hidden><ArrowIcon /></span>
+						</Button>
+					</article>
 				</div>
 			</div>
 		);

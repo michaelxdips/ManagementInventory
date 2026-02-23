@@ -2,19 +2,22 @@ import { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 import { createRequest } from '../../api/requests.api';
 import { fetchUnitNames } from '../../api/units.api';
+import useAuth from '../../hooks/useAuth';
 
 interface UserRequestFormProps {
     onSuccess: () => void;
 }
 
 const UserRequestForm = ({ onSuccess }: UserRequestFormProps) => {
+    const { user } = useAuth();
+    const isUserRole = user?.role === 'user';
     const [formValues, setFormValues] = useState({
         item: '',
         date: new Date().toISOString().split('T')[0], // Default to today
         qty: '',
         unit: '',
         receiver: '',
-        dept: '',
+        dept: isUserRole && user?.name ? user.name : '',
     });
     const [unitOptions, setUnitOptions] = useState<string[]>([]);
     const [formError, setFormError] = useState<string | null>(null);
@@ -122,16 +125,25 @@ const UserRequestForm = ({ onSuccess }: UserRequestFormProps) => {
                     </label>
                     <label className="form-field">
                         <span className="form-label">Unit</span>
-                        <select
-                            className="input-control"
-                            value={formValues.dept}
-                            onChange={(e) => handleChange('dept', e.target.value)}
-                        >
-                            <option value="">-- Pilih --</option>
-                            {unitOptions.map((name) => (
-                                <option key={name} value={name}>{name}</option>
-                            ))}
-                        </select>
+                        {isUserRole ? (
+                            <input
+                                className="input-control"
+                                value={formValues.dept}
+                                disabled
+                                style={{ backgroundColor: 'var(--bg-muted, #f0f0f0)', cursor: 'not-allowed' }}
+                            />
+                        ) : (
+                            <select
+                                className="input-control"
+                                value={formValues.dept}
+                                onChange={(e) => handleChange('dept', e.target.value)}
+                            >
+                                <option value="">-- Pilih --</option>
+                                {unitOptions.map((name) => (
+                                    <option key={name} value={name}>{name}</option>
+                                ))}
+                            </select>
+                        )}
                     </label>
                 </div>
 
