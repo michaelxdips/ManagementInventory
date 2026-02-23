@@ -50,14 +50,14 @@ export const updateItem = async (req, res) => {
             const [countRows] = await pool.query(`
                 SELECT COUNT(*) as count 
                 FROM requests 
-                WHERE LOWER(item) = LOWER(?) AND status = 'PENDING'
+                WHERE LOWER(item) = LOWER(?) AND (status = 'PENDING' OR status = 'APPROVAL_REVIEW')
             `, [existing.nama_barang]);
 
             const pendingCount = countRows[0];
 
             if (pendingCount && pendingCount.count > 0) {
                 return res.status(409).json({
-                    message: 'Item cannot be edited (qty/name) while there are pending requests. Reject/Approve them first.'
+                    message: 'Item cannot be edited (qty/name) while there are pending or in-review requests. Reject/Approve them first.'
                 });
             }
         }

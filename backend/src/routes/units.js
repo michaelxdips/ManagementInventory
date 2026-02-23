@@ -92,6 +92,9 @@ router.delete('/:id', authenticate, authorize('superadmin'), async (req, res) =>
             });
         }
 
+        // Delete associated unit quotas first
+        await pool.execute('DELETE FROM unit_quota WHERE unit_id = ?', [id]);
+
         await pool.execute('DELETE FROM users WHERE id = ?', [id]);
 
         res.status(204).send();
