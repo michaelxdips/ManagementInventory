@@ -1,4 +1,10 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  if (hostname.includes('vercel.app')) return `https://${hostname}/api`;
+  return `http://${hostname}:3000/api`;
+};
+const API_BASE = getBaseUrl();
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
