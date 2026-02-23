@@ -50,15 +50,15 @@ const Dashboard = () => {
 					<article className="dash-card">
 						<div>
 							<p className="card-kicker">Dashboard</p>
-							<h2 className="card-title">Riwayat Permintaan</h2>
-							<p className="card-desc">Lihat status permintaan ATK yang sudah diproses.</p>
+							<h2 className="card-title">Daftar Barang</h2>
+							<p className="card-desc">Lihat semua barang ATK yang tersedia.</p>
 						</div>
 						<Button
 							type="button"
 							variant="secondary"
 							className="card-cta"
-							aria-label="Lihat Riwayat"
-							onClick={() => navigate('/information')}
+							aria-label="Lihat Barang"
+							onClick={() => navigate('/items')}
 						>
 							<span className="cta-text">Lihat</span>
 							<span className="cta-icon" aria-hidden><ArrowIcon /></span>
@@ -78,23 +78,6 @@ const Dashboard = () => {
 							onClick={() => navigate('/requests/create')}
 						>
 							<span className="cta-text">Buat Request</span>
-							<span className="cta-icon" aria-hidden><ArrowIcon /></span>
-						</Button>
-					</article>
-					<article className="dash-card">
-						<div>
-							<p className="card-kicker">Dashboard</p>
-							<h2 className="card-title">Daftar Barang</h2>
-							<p className="card-desc">Lihat semua barang ATK yang tersedia.</p>
-						</div>
-						<Button
-							type="button"
-							variant="secondary"
-							className="card-cta"
-							aria-label="Lihat Barang"
-							onClick={() => navigate('/items')}
-						>
-							<span className="cta-text">Lihat</span>
 							<span className="cta-icon" aria-hidden><ArrowIcon /></span>
 						</Button>
 					</article>
