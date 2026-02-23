@@ -28,7 +28,15 @@ const Requests = () => {
     fetchRequests()
       .then((rows) => {
         if (!mounted) return;
-        setData(rows);
+        // For user role: only show PENDING and APPROVAL_REVIEW requests
+        // APPROVED/REJECTED items are shown in the Information tab instead
+        const filtered = isUser
+          ? rows.filter((r) => {
+            const s = r.status.toUpperCase();
+            return s === 'PENDING' || s === 'APPROVAL_REVIEW';
+          })
+          : rows;
+        setData(filtered);
         setError(null);
       })
       .catch((err) => {
