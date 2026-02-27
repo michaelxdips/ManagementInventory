@@ -2,9 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import useAuth from '../hooks/useAuth';
 import { Role } from '../types/auth';
-import { useState } from 'react';
-import UserRequestList from '../components/dashboard/UserRequestList';
-import UserRequestForm from '../components/dashboard/UserRequestForm';
 
 
 type CardItem = {
@@ -32,11 +29,9 @@ const ArrowIcon = () => (
 const Dashboard = () => {
 	const navigate = useNavigate();
 	const { hasRole } = useAuth();
-	// const isUser = hasRole(['user']); // Unused if we remove the section
 
 	const visibleCards = cards.filter((card) => !card.roles || hasRole(card.roles));
 
-	const [refreshTrigger, setRefreshTrigger] = useState(0);
 	const isUser = hasRole(['user']) && !hasRole(['admin', 'superadmin']);
 
 	if (isUser) {

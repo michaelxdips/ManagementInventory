@@ -9,7 +9,6 @@ import { specs } from './config/swagger.js';
 // Import routes
 import authRoutes from './routes/auth.js';
 import itemsRoutes from './routes/items.js';
-import barangKeluarRoutes from './routes/barangKeluar.js';
 import barangMasukRoutes from './routes/barangMasuk.js';
 import approvalRoutes from './routes/approval.js';
 import historyRoutes from './routes/history.js';
@@ -46,7 +45,6 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/atk-items', itemsRoutes);
-app.use('/api/barang-keluar', barangKeluarRoutes);
 app.use('/api/barang-masuk', barangMasukRoutes);
 app.use('/api/approval', approvalRoutes);
 app.use('/api/history', historyRoutes);

@@ -645,31 +645,6 @@ a {
   min-width: 200px;
 }
 
-.request-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid #7f8bb0;
-  background: #7f8bb0;
-  color: #f8f9fb;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.print-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid #7a8298;
-  background: #7a8298;
-  color: #f8f9fb;
-  font-weight: 700;
-  cursor: pointer;
-}
 
 .history-card {
   background: var(--panel);

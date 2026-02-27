@@ -159,21 +159,23 @@ const Requests = () => {
         display: 'flex',
         gap: '0',
         marginBottom: '16px',
-        borderBottom: '2px solid var(--border-color, #e2e8f0)',
+        borderBottom: '2px solid var(--border, #e2e8f0)',
       }}>
         <button
           onClick={() => setActiveTab('ambil')}
           style={{
-            padding: '10px 20px',
+            padding: '12px 20px',
+            minHeight: '44px',
             border: 'none',
             background: 'none',
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: activeTab === 'ambil' ? '600' : '400',
-            color: activeTab === 'ambil' ? 'var(--primary, #4f46e5)' : 'var(--text-muted, #64748b)',
-            borderBottom: activeTab === 'ambil' ? '2px solid var(--primary, #4f46e5)' : '2px solid transparent',
+            color: activeTab === 'ambil' ? 'var(--text)' : 'var(--muted)',
+            borderBottom: activeTab === 'ambil' ? '2px solid var(--text)' : '2px solid transparent',
             marginBottom: '-2px',
             transition: 'all 0.2s ease',
+            flex: '1',
           }}
         >
           Ambil Barang
@@ -181,16 +183,18 @@ const Requests = () => {
         <button
           onClick={() => setActiveTab('baru')}
           style={{
-            padding: '10px 20px',
+            padding: '12px 20px',
+            minHeight: '44px',
             border: 'none',
             background: 'none',
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: activeTab === 'baru' ? '600' : '400',
-            color: activeTab === 'baru' ? 'var(--primary, #4f46e5)' : 'var(--text-muted, #64748b)',
-            borderBottom: activeTab === 'baru' ? '2px solid var(--primary, #4f46e5)' : '2px solid transparent',
+            color: activeTab === 'baru' ? 'var(--text)' : 'var(--muted)',
+            borderBottom: activeTab === 'baru' ? '2px solid var(--text)' : '2px solid transparent',
             marginBottom: '-2px',
             transition: 'all 0.2s ease',
+            flex: '1',
           }}
         >
           Request Barang Baru

@@ -188,7 +188,7 @@ const NewItemRequestApproval = () => {
         <div className="history-page">
             <div className="history-card">
                 <h2 className="history-title">Request Barang Baru</h2>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+                <p style={{ color: 'var(--muted)', marginBottom: '16px' }}>
                     Kelola permintaan barang baru dari user. Approve akan menambahkan item baru ke inventory.
                 </p>
 
@@ -198,7 +198,7 @@ const NewItemRequestApproval = () => {
                         className="input-control"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                        style={{ width: 'auto', minWidth: '140px' }}
+                        style={{ width: 'auto', minWidth: '140px', flex: '0 1 auto' }}
                     >
                         <option value="PENDING">Pending</option>
                         <option value="APPROVED">Approved</option>
@@ -210,7 +210,7 @@ const NewItemRequestApproval = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Cari nama barang..."
-                        style={{ width: 'auto', minWidth: '200px', flex: '1' }}
+                        style={{ minWidth: '140px', flex: '1 1 200px' }}
                     />
                 </div>
 
@@ -269,7 +269,7 @@ const NewItemRequestApproval = () => {
                                                 </Button>
                                             </div>
                                         ) : (
-                                            <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--muted)', fontSize: '13px' }}>
                                                 {row.status === 'APPROVED' && row.approved_quantity
                                                     ? `Qty: ${row.approved_quantity}`
                                                     : row.status === 'REJECTED' && row.reject_reason
