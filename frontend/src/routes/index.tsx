@@ -18,6 +18,7 @@ import PasswordSettings from '../pages/PasswordSettings';
 import ProfileSettings from '../pages/ProfileSettings';
 import Requests from '../pages/Requests';
 import RequestsCreate from '../pages/RequestsCreate';
+import NewItemRequestApproval from '../pages/NewItemRequestApproval';
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
 
@@ -55,6 +56,7 @@ const AppRoutes = () => {
 						<Route path="/barang-kosong" element={<BarangKosong />} />
 						<Route path="/approval" element={<Approval />} />
 						<Route path="/approval/:id/finalize" element={<ApprovalFinalize />} />
+						<Route path="/new-item-requests" element={<NewItemRequestApproval />} />
 					</Route>
 
 					{/* Superadmin only routes */}

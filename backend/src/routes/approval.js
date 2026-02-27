@@ -299,23 +299,30 @@ router.post('/:id/finalize', authenticate, authorize('admin', 'superadmin'), asy
 
 // POST /api/approval/:id/reject - Reject a request (no stock change)
 router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
+    const connection = await pool.getConnection();
     try {
         const { id } = req.params;
 
-        // Check request first
-        const [reqRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [id]);
+        await connection.beginTransaction();
+
+        // Lock and fetch request
+        const [reqRows] = await connection.query('SELECT * FROM requests WHERE id = ? FOR UPDATE', [id]);
         const request = reqRows[0];
 
         if (!request) {
+            await connection.rollback();
             return res.status(404).json({ message: 'Request tidak ditemukan' });
         }
 
         if (request.status !== 'PENDING' && request.status !== 'APPROVAL_REVIEW') {
+            await connection.rollback();
             return res.status(400).json({ message: 'Request sudah diproses sebelumnya' });
         }
 
         // Update status to REJECTED (no stock change)
-        await pool.execute('UPDATE requests SET status = ? WHERE id = ?', ['REJECTED', id]);
+        await connection.execute('UPDATE requests SET status = ? WHERE id = ?', ['REJECTED', id]);
+
+        await connection.commit();
 
         const [updatedRows] = await pool.query(`
             SELECT 
@@ -335,8 +342,11 @@ router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), async
 
         res.json(updatedRows[0]);
     } catch (error) {
+        await connection.rollback();
         console.error('Reject request error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        connection.release();
     }
 });
 

@@ -17,6 +17,7 @@ import requestsRoutes from './routes/requests.js';
 import unitsRoutes from './routes/units.js';
 import barangKosongRoutes from './routes/barangKosong.js';
 import usersRoutes from './routes/users.js';
+import newItemRequestsRoutes from './routes/newItemRequests.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +54,7 @@ app.use('/api/requests', requestsRoutes);
 app.use('/api/units', unitsRoutes);
 app.use('/api/barang-kosong', barangKosongRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/new-item-requests', newItemRequestsRoutes);
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));

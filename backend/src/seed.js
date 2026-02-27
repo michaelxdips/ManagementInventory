@@ -27,7 +27,7 @@ const seed = async () => {
     await connection.query(`
       CREATE TABLE IF NOT EXISTS atk_items (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        nama_barang VARCHAR(255) NOT NULL,
+        nama_barang VARCHAR(255) NOT NULL UNIQUE,
         kode_barang VARCHAR(255),
         qty INTEGER NOT NULL DEFAULT 0,
         satuan VARCHAR(50) NOT NULL,
@@ -89,6 +89,28 @@ const seed = async () => {
       );
     `);
 
+    // Item Requests New (Request Barang Baru) table
+    // DOMAIN: Inventory Creation — completely separate from requests (Ambil Barang)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS item_requests_new (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        requested_by INTEGER NOT NULL,
+        item_name VARCHAR(255) NOT NULL,
+        description TEXT,
+        satuan VARCHAR(50),
+        category VARCHAR(255),
+        reason TEXT,
+        status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+        approved_by INTEGER,
+        approved_quantity INTEGER,
+        reject_reason VARCHAR(500),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (requested_by) REFERENCES users(id),
+        FOREIGN KEY (approved_by) REFERENCES users(id)
+      );
+    `);
+
     // Barang Kosong (Empty Items) table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS barang_kosong (
@@ -121,6 +143,7 @@ const seed = async () => {
     await connection.query('DELETE FROM barang_keluar');
     await connection.query('DELETE FROM barang_masuk');
     await connection.query('DELETE FROM requests');
+    await connection.query('DELETE FROM item_requests_new');
     await connection.query('DELETE FROM barang_kosong');
     await connection.query('DELETE FROM atk_items');
     await connection.query('DELETE FROM users');
