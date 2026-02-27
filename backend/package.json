@@ -7,7 +7,11 @@
     "scripts": {
         "dev": "node --watch src/index.js",
         "start": "node src/index.js",
-        "seed": "node src/seed.js",
+        "migrate": "npx knex migrate:latest --knexfile knexfile.js",
+        "migrate:rollback": "npx knex migrate:rollback --knexfile knexfile.js",
+        "migrate:status": "npx knex migrate:status --knexfile knexfile.js",
+        "seed": "npx knex migrate:latest --knexfile knexfile.js && npx knex seed:run --knexfile knexfile.js",
+        "seed:data": "npx knex seed:run --knexfile knexfile.js",
         "lint": "eslint src/**/*.js",
         "format": "prettier --write src/**/*.js"
     },
@@ -19,6 +23,7 @@
         "express-rate-limit": "^8.2.1",
         "helmet": "^8.1.0",
         "jsonwebtoken": "^9.0.2",
+        "knex": "^3.1.0",
         "mysql2": "^3.16.2",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1"
