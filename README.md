@@ -1,169 +1,89 @@
-# 📦 Web Inventory Management System (ATK)
+<div align="center">
+  <img src="./frontend/public/logo.png" alt="Logo" width="120" />
+  <h1>📦 Management Inventory ATK</h1>
+  <p>💡 <i>Sistem Cerdas Pengelolaan Alat Tulis Kantor (ATK) Berbasis Web</i></p>
 
-![Project Status](https://img.shields.io/badge/Status-Final_RC-success)
-![Tech Stack](https://img.shields.io/badge/Stack-React_Node_MySQL-blue)
-![License](https://img.shields.io/badge/License-PKL-orange)
-
-Sistem Informasi Manajemen Inventaris berbasis Web untuk pengelolaan Alat Tulis Kantor (ATK). Dibangun dengan arsitektur modern (Separation of Concern) antara Frontend dan Backend, mengutamakan keamanan data, integritas stok, dan pengalaman pengguna mobile yang responsif.
-
----
-
-## ✨ Fitur Utama (Features)
-
-Aplikasi ini mencakup siklus lengkap manajemen barang, mulai dari penerimaan, permintaan user, hingga persetujuan admin.
-
-### 1. Manajemen Stok & Inventaris
-
-- **Real-time Monitoring**: Stok barang terupdate otomatis saat transaksi disetujui.
-- **Low Stock Alerts**: Notifikasi visual untuk barang yang stoknya menipis atau habis.
-- **Manajemen Unit**: Kustomisasi satuan barang (Pcs, Rim, Box, dll).
-- **Barang Masuk (Procurement)**: Pencatatan barang masuk dari supplier dengan validasi ketat.
-
-### 2. Digital Request & Approval Flow
-
-Menggantikan sistem form kertas dengan alur digital yang terkontrol:
-
-1.  **Request User**: User biasa mengajukan permintaan barang via aplikasi.
-2.  **Pending Queue**: Request masuk ke daftar antrian Admin.
-3.  **Strict Blocking**: Barang yang sedang ada di antrian "Pending" tidak bisa di-rename/edit untuk mencegah manipulasi data.
-4.  **Real-Time Notifications (SSE)**: Admin dan User akan mendapatkan notifikasi instan langsung di layar tanpa perlu _refresh_ page setiap kali ada Request baru atau saat status Approval berubah.
-5.  **Eksekusi Admin (Approve/Reject)**:
-    - **Approve**: Stok otomatis berkurang, tercatat di History Keluar.
-    - **Reject**: Request ditolak dengan alasan, stok tetap aman.
-
-### 3. Laporan & Histori (Reporting)
-
-- **History Barang Masuk**: Log lengkap kapan barang ditambah, jumlah, dan PIC penerima.
-- **History Barang Keluar**: Jejak audit digital siapa yang meminta barang, kapan disetujui, dan oleh siapa.
-- **Filter & Sort**: Pencarian data berdasarkan rentang tanggal dan nama barang.
-
-### 4. Manajemen Akun & Keamanan (Security)
-
-- **Role-Based Access Control (RBAC)**:
-  - **User**: Hanya bisa Request dan Lihat Stok.
-  - **Admin**: Approval Request, Input Barang Masuk, Manajemen Unit.
-  - **Superadmin**: Full Access termasuk Edit Detail Barang dan Manajemen User.
-- **Self-Service Security**: Update profil dan ganti password mandiri.
-- **Account Deletion Protection**: Menghapus akun wajib memasukkan password konfirmasi (mencegah hijack).
-
-### 5. Mobile-First Experience 📱
-
-- **Adaptive Layout**: Sidebar otomatis berubah menjadi Drawer Menu di layar kecil.
-- **Smart Views**: Tabel data otomatis bertransformasi menjadi **Card View** di mobile agar mudah dibaca.
-- **Touch Friendly**: Tombol dan input didesain nyaman untuk layar sentuh.
+  <p>
+    <img src="https://img.shields.io/badge/Status-Final_RC-success?style=for-the-badge" alt="Status" />
+    <img src="https://img.shields.io/badge/Stack-React_|_Node_|_MySQL-blue?style=for-the-badge&logo=react" alt="Tech Stack" />
+    <img src="https://img.shields.io/badge/License-PKL-orange?style=for-the-badge" alt="License" />
+  </p>
+</div>
 
 ---
 
-## 🛠️ Teknologi (Tech Stack)
+## 🎯 Tentang Proyek
 
-Dibangun menggunakan stack industri terkini:
+Sistem Informasi Manajemen Inventaris ATK adalah solusi digital komprehensif yang memodernisasi cara perusahaan mencatat persediaan, mengelola barang masuk, dan memproses permintaan dari setiap divisi. Dilengkapi dengan lapisan keamanan mutakhir dan notifikasi _real-time_, sistem ini mencegah inkonsistensi data serta memberikan pengalaman luar biasa, baik di _desktop_ maupun ponsel.
 
-| Layer        | Technology              | Description                                    |
-| :----------- | :---------------------- | :--------------------------------------------- |
-| **Frontend** | **React 19 + Vite**     | Framework UI modern, cepat, dan ringan.        |
-| **Styling**  | **CSS Modules**         | Desain responsif manual tanpa framework berat. |
-| **Backend**  | **Node.js + Express**   | RESTful API server.                            |
-| **Database** | **MySQL (Aiven Cloud)** | Relational DB dengan ACID Transactions.        |
-| **Auth**     | **JWT + Bcrypt**        | Secure stateless authentication.               |
-| **DevOps**   | **Docker**              | Containerization untuk kemudahan deployment.   |
+## ✨ Fitur-Fitur Unggulan
 
----
+🛡️ **Manajemen Stok Terjamin (Zero-Minus)**
+Setiap transaksi dibungkus dalam _Database Transactions_ dan _Row-Level Locking_, menjamin stok tidak akan pernah "minus" walau diakses ratusan pengguna secara serentak.
 
-## 📂 Struktur Folder Proyek
+⚡ **Notifikasi Real-Time (SSE)**
+Semua _Request_ baru dan perubahan status (Disetujui/Ditolak) akan langsung muncul di layar _Admin_ maupun _User_ dalam hitungan milidetik tanpa perlu me-_refresh_ halaman.
 
-```
-📦 ManagementInventory
- ┣ 📂 backend                 # Server Side Code
- ┃ ┣ 📂 src
- ┃ ┃ ┣ 📂 config              # DB Connection
- ┃ ┃ ┣ 📂 controllers         # Business Logic
- ┃ ┃ ┣ 📂 middleware          # Auth & RBAC
- ┃ ┃ ┣ 📂 routes              # API Endpoints
- ┃ ┃ ┗ 📜 index.js            # Entry Point
- ┃ ┗ 📜 Dockerfile
- ┣ 📂 frontend                # Client Side Code
- ┃ ┣ 📂 src
- ┃ ┃ ┣ 📂 api                 # Axios Service Layer
- ┃ ┃ ┣ 📂 components          # Reusable UI & Layouts
- ┃ ┃ ┣ 📂 hooks               # Custom React Hooks
- ┃ ┃ ┣ 📂 pages               # Screen Views
- ┃ ┃ ┗ 📜 styles.css          # Global Variables
- ┃ ┗ 📜 Dockerfile
- ┗ 📜 docker-compose.yml      # Orchestration
-```
+🚨 **Peringatan Stok Kritis**
+Indikator warna cerdas akan otomatis menyala di tabel _Inventory_ jika ada stok barang yang menyentuh batas minimum, memperingatkan Admin untuk segera melakukan pemesanan ulang (_restock_).
 
----
+📱 **Desain Mobile-First & Responsif**
+_Layout_ otomatis beradaptasi menjadi _Card View_ super rapi di layar ponsel, lengkap dengan navigasi _Drawer Menu_ yang intuitif untuk kemudahan akses di lapangan.
 
-## 🚀 Instalasi & Menjalankan (Local)
+🔒 **Role-Based Access Control (RBAC)**
+Pengaturan hak akses terpusat antara **Superadmin**, **Admin (Operasional)**, dan **User (Pemohon)** dengan pengamanan API ketat di sisi _backend_.
 
-### Persyaratan
+## 🛠️ Arsitektur Teknologi
 
-- Node.js v18+
-- MySQL Server (Local atau Cloud)
+Dibangun menggunakan standar industri terkini untuk memastikan performa maksimal dan kemudahan _maintenance_:
 
-### Cara 1: Standard (Manual)
+| Komponen       | Teknologi            | Keterangan                                                                     |
+| :------------- | :------------------- | :----------------------------------------------------------------------------- |
+| **Frontend**   | ⚛️ React 19 + Vite   | UI dinamis, sangat reaktif, didukung _Custom Hooks_ & _CSS Modules_.           |
+| **Backend**    | 🟢 Node.js + Express | RESTful API server yang tangguh, merespons asinkronus, dan aman.               |
+| **Database**   | 🐬 MySQL (Aiven)     | Relational DB di _Cloud_ guna menjaga _ACID Transactions_.                     |
+| **Security**   | 🔑 JWT + Bcrypt      | _Stateless Authentication_ dengan skema _hashing_ kata sandi kuat.             |
+| **Deployment** | 🐳 Docker            | _Containerization_ mulus untuk isolasi lingkungan pengembangan yang konsisten. |
 
-1.  **Setup Backend**
+## 🚀 Panduan Instalasi (Lokal)
 
-    ```bash
-    cd backend
-    npm install
-    cp .env.example .env
-    # Konfigurasi database di file .env
-    npm run dev
-    ```
+Sistem membutuhkan **Node.js v18+** dan **MySQL Server**.
 
-2.  **Setup Frontend**
-
-    ```bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
-
-3.  Akses aplikasi di `http://localhost:5173`.
-
-### Cara 2: Docker (Recommended) 🐳
-
-Jika Docker Desktop sudah terinstall, cukup jalankan satu perintah:
+### 1. Konfigurasi Backend
 
 ```bash
-docker-compose up -d --build
+cd backend
+npm install
+cp .env.example .env
+# Isi kredensial database Anda di file .env
+npm run dev
 ```
 
-Aplikasi akan otomatis berjalan di container terisolasi.
+### 2. Konfigurasi Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+_Aplikasi web Anda akan menyala di `http://localhost:5173`._
 
 ---
 
-## 🔑 Akun Default (Demo)
+## 🔑 Mode Demo: Akun Tersedia
 
-Gunakan kredensial berikut untuk pengujian:
+Gunakan _credentials_ di bawah ini untuk mencoba berbagai tingkatan akses:
 
-| Role           | Username     | Password      | Akses                        |
-| :------------- | :----------- | :------------ | :--------------------------- |
-| **Superadmin** | `superadmin` | `password123` | Full Control                 |
-| **Admin**      | `admin`      | `password123` | Ops Harian (Stok & Approval) |
-| **User**       | `user`       | `password123` | Request Only                 |
-
----
-
-## 📝 Catatan Implementasi (Untuk Laporan PKL)
-
-- **Pemisahan Logic Backend**: Validasi stok (negatif check) dan logic transaksi (approval mengurangi stok) dilakukan di Backend menggunakan MySQL Transactions untuk menjamin data tidak korup.
-- **Security Hardening**: API Endpoint dilindungi Middleware `authorize('role')` sehingga User biasa tidak bisa menembus akses Admin via Imnsomnia/Postman.
-- **Responsive Strategy**: Menggunakan Custom Hook `useBreakpoint` untuk mendeteksi ukuran layar dan me-render komponen `DesktopLayout` atau `MobileLayout` secara kondisional.
-
-## 🎨 Kustomisasi Tampilan (Customization)
-
-### Mengganti Logo Judul dan Favicon Aplikasi
-
-Untuk mengganti logo utama yang muncul di halaman _Login_ dan di pojok kiri atas _Sidebar_:
-
-1. Siapkan 2 file gambar logo Anda dengan nama: `logo.png` (usahakan latar transparan) dan `favicon.ico` (untuk ikon _tab browser_).
-2. Masuk ke folder `frontend/public/`
-3. Timpa (Replace) file `logo.png` dan `favicon.ico` bawaan dengan file Anda yang baru.
-4. _Refresh browser_ Anda (Mungkin perlu `Ctrl + Shift + R` untuk membersihkan _cache_ gambar lama).
+| Akses Pengguna | Username     | Password      | Tipe Kekuasaan                                            |
+| :------------- | :----------- | :------------ | :-------------------------------------------------------- |
+| **Superadmin** | `superadmin` | `password123` | ✨ _God Mode_ (Manajemen User & Ubah Detail Katalog)      |
+| **Admin**      | `admin`      | `password123` | 📦 _Operasional_ (Tambah Stok Master & _Approve_ Request) |
+| **User**       | `user`       | `password123` | 👤 _Basic Access_ (Melihat Katalog Stok & Meminta Barang) |
 
 ---
 
-**Developed for PKL Project - 2026**
+<div align="center">
+  <b>Developed for PKL Project - 2026</b><br/>
+  <i>Membawa Manajemen Inventaris ATK ke Era Digital yang Responsif & Elegan</i>
+</div>
