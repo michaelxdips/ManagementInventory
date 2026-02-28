@@ -16,6 +16,7 @@ interface EditFormData {
 	quantity: number;
 	unit: string;
 	location: string;
+	minStock: number;
 }
 
 const AtkItems = () => {
@@ -35,7 +36,7 @@ const AtkItems = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [editingItem, setEditingItem] = useState<Item | null>(null);
-	const [editFormData, setEditFormData] = useState<EditFormData>({ name: '', code: '', quantity: 0, unit: '', location: '' });
+	const [editFormData, setEditFormData] = useState<EditFormData>({ name: '', code: '', quantity: 0, unit: '', location: '', minStock: 5 });
 	const [editLoading, setEditLoading] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
 	// Request modal for users
@@ -113,6 +114,7 @@ const AtkItems = () => {
 			quantity: item.quantity,
 			unit: item.unit,
 			location: item.location,
+			minStock: item.minStock || 5,
 		});
 		setEditError(null);
 		setShowEditModal(true);
@@ -138,10 +140,11 @@ const AtkItems = () => {
 				qty: editFormData.quantity,
 				satuan: editFormData.unit,
 				lokasi_simpan: editFormData.location,
+				min_stock: editFormData.minStock,
 			});
 			setItems(items.map(item =>
 				item.id === editingItem.id
-					? { ...item, name: editFormData.name, code: editFormData.code, quantity: editFormData.quantity, unit: editFormData.unit, location: editFormData.location }
+					? { ...item, name: editFormData.name, code: editFormData.code, quantity: editFormData.quantity, unit: editFormData.unit, location: editFormData.location, minStock: editFormData.minStock }
 					: item
 			));
 			setShowEditModal(false);
@@ -271,37 +274,44 @@ const AtkItems = () => {
 								<TD colSpan={7} className="empty-row">Tidak ada data</TD>
 							</TR>
 						) : (
-							displayItems.map((item, idx) => (
-								<TR key={item.id}>
-									<TD>{startIndex + idx + 1}</TD>
-									<TD>{item.name}</TD>
-									<TD>{item.code || '-'}</TD>
-									<TD>{item.quantity.toLocaleString('id-ID')}</TD>
-									<TD>{item.unit}</TD>
-									<TD>{item.location || '-'}</TD>
-									<TD>
-										<div className="action-buttons">
-											{isSuperadmin ? (
-												<Button type="button" variant="ghost" size="sm" onClick={() => handleEditClick(item)}>
-													✏ Edit
-												</Button>
-											) : isAdminOrSuperadmin ? (
-												<span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>-</span>
-											) : (
-												<Button
-													type="button"
-													variant={item.quantity > 0 ? 'secondary' : 'ghost'}
-													size="sm"
-													onClick={() => handleRequestClick(item)}
-													disabled={item.quantity <= 0}
-												>
-													{item.quantity > 0 ? '📦 Ambil' : 'Habis'}
-												</Button>
-											)}
-										</div>
-									</TD>
-								</TR>
-							))
+							displayItems.map((item, idx) => {
+								const isLowStock = item.quantity <= (item.minStock || 5) && item.quantity > 0;
+								const isOutOfStock = item.quantity === 0;
+								return (
+									<TR key={item.id} className={isOutOfStock ? 'row-danger' : isLowStock ? 'row-warning' : ''}>
+										<TD>{startIndex + idx + 1}</TD>
+										<TD>
+											{item.name} 
+											{isLowStock && <span title="Stok Kritis" style={{marginLeft: 8, fontSize: '0.8rem'}}>⚠️</span>}
+										</TD>
+										<TD>{item.code || '-'}</TD>
+										<TD>{item.quantity.toLocaleString('id-ID')}</TD>
+										<TD>{item.unit}</TD>
+										<TD>{item.location || '-'}</TD>
+										<TD>
+											<div className="action-buttons">
+												{isSuperadmin ? (
+													<Button type="button" variant="ghost" size="sm" onClick={() => handleEditClick(item)}>
+														✏ Edit
+													</Button>
+												) : isAdminOrSuperadmin ? (
+													<span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>-</span>
+												) : (
+													<Button
+														type="button"
+														variant={item.quantity > 0 ? 'secondary' : 'ghost'}
+														size="sm"
+														onClick={() => handleRequestClick(item)}
+														disabled={item.quantity <= 0}
+													>
+														{item.quantity > 0 ? '📦 Ambil' : 'Habis'}
+													</Button>
+												)}
+											</div>
+										</TD>
+									</TR>
+								)
+							})
 						)}
 					</TBody>
 				</Table>
@@ -428,6 +438,21 @@ const AtkItems = () => {
 							onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
 							placeholder="Lokasi simpan"
 						/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="edit-minstock">Peringatan Stok Minimum</label>
+						<Input
+							id="edit-minstock"
+							type="number"
+							min={0}
+							value={editFormData.minStock}
+							onChange={(e) => setEditFormData({ ...editFormData, minStock: Number(e.target.value) })}
+							placeholder="Contoh: 5"
+							required
+						/>
+						<p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+							Barang akan menyala kuning jika stok menyentuh angka ini atau di bawahnya.
+						</p>
 					</div>
 				</form>
 			</Modal>

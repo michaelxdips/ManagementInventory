@@ -13,37 +13,44 @@ Sistem Informasi Manajemen Inventaris berbasis Web untuk pengelolaan Alat Tulis 
 Aplikasi ini mencakup siklus lengkap manajemen barang, mulai dari penerimaan, permintaan user, hingga persetujuan admin.
 
 ### 1. Manajemen Stok & Inventaris
-*   **Real-time Monitoring**: Stok barang terupdate otomatis saat transaksi disetujui.
-*   **Low Stock Alerts**: Notifikasi visual untuk barang yang stoknya menipis atau habis.
-*   **Manajemen Unit**: Kustomisasi satuan barang (Pcs, Rim, Box, dll).
-*   **Barang Masuk (Procurement)**: Pencatatan barang masuk dari supplier dengan validasi ketat.
+
+- **Real-time Monitoring**: Stok barang terupdate otomatis saat transaksi disetujui.
+- **Low Stock Alerts**: Notifikasi visual untuk barang yang stoknya menipis atau habis.
+- **Manajemen Unit**: Kustomisasi satuan barang (Pcs, Rim, Box, dll).
+- **Barang Masuk (Procurement)**: Pencatatan barang masuk dari supplier dengan validasi ketat.
 
 ### 2. Digital Request & Approval Flow
+
 Menggantikan sistem form kertas dengan alur digital yang terkontrol:
+
 1.  **Request User**: User biasa mengajukan permintaan barang via aplikasi.
 2.  **Pending Queue**: Request masuk ke daftar antrian Admin.
 3.  **Strict Blocking**: Barang yang sedang ada di antrian "Pending" tidak bisa di-rename/edit untuk mencegah manipulasi data.
-4.  **Eksekusi Admin (Approve/Reject)**:
-    *   **Approve**: Stok otomatis berkurang, tercatat di History Keluar.
-    *   **Reject**: Request ditolak dengan alasan, stok tetap aman.
+4.  **Real-Time Notifications (SSE)**: Admin dan User akan mendapatkan notifikasi instan langsung di layar tanpa perlu _refresh_ page setiap kali ada Request baru atau saat status Approval berubah.
+5.  **Eksekusi Admin (Approve/Reject)**:
+    - **Approve**: Stok otomatis berkurang, tercatat di History Keluar.
+    - **Reject**: Request ditolak dengan alasan, stok tetap aman.
 
 ### 3. Laporan & Histori (Reporting)
-*   **History Barang Masuk**: Log lengkap kapan barang ditambah, jumlah, dan PIC penerima.
-*   **History Barang Keluar**: Jejak audit digital siapa yang meminta barang, kapan disetujui, dan oleh siapa.
-*   **Filter & Sort**: Pencarian data berdasarkan rentang tanggal dan nama barang.
+
+- **History Barang Masuk**: Log lengkap kapan barang ditambah, jumlah, dan PIC penerima.
+- **History Barang Keluar**: Jejak audit digital siapa yang meminta barang, kapan disetujui, dan oleh siapa.
+- **Filter & Sort**: Pencarian data berdasarkan rentang tanggal dan nama barang.
 
 ### 4. Manajemen Akun & Keamanan (Security)
-*   **Role-Based Access Control (RBAC)**:
-    *   **User**: Hanya bisa Request dan Lihat Stok.
-    *   **Admin**: Approval Request, Input Barang Masuk, Manajemen Unit.
-    *   **Superadmin**: Full Access termasuk Edit Detail Barang dan Manajemen User.
-*   **Self-Service Security**: Update profil dan ganti password mandiri.
-*   **Account Deletion Protection**: Menghapus akun wajib memasukkan password konfirmasi (mencegah hijack).
+
+- **Role-Based Access Control (RBAC)**:
+  - **User**: Hanya bisa Request dan Lihat Stok.
+  - **Admin**: Approval Request, Input Barang Masuk, Manajemen Unit.
+  - **Superadmin**: Full Access termasuk Edit Detail Barang dan Manajemen User.
+- **Self-Service Security**: Update profil dan ganti password mandiri.
+- **Account Deletion Protection**: Menghapus akun wajib memasukkan password konfirmasi (mencegah hijack).
 
 ### 5. Mobile-First Experience 📱
-*   **Adaptive Layout**: Sidebar otomatis berubah menjadi Drawer Menu di layar kecil.
-*   **Smart Views**: Tabel data otomatis bertransformasi menjadi **Card View** di mobile agar mudah dibaca.
-*   **Touch Friendly**: Tombol dan input didesain nyaman untuk layar sentuh.
+
+- **Adaptive Layout**: Sidebar otomatis berubah menjadi Drawer Menu di layar kecil.
+- **Smart Views**: Tabel data otomatis bertransformasi menjadi **Card View** di mobile agar mudah dibaca.
+- **Touch Friendly**: Tombol dan input didesain nyaman untuk layar sentuh.
 
 ---
 
@@ -51,14 +58,14 @@ Menggantikan sistem form kertas dengan alur digital yang terkontrol:
 
 Dibangun menggunakan stack industri terkini:
 
-| Layer | Technology | Description |
-| :--- | :--- | :--- |
-| **Frontend** | **React 19 + Vite** | Framework UI modern, cepat, dan ringan. |
-| **Styling** | **CSS Modules** | Desain responsif manual tanpa framework berat. |
-| **Backend** | **Node.js + Express** | RESTful API server. |
-| **Database** | **MySQL (Aiven Cloud)** | Relational DB dengan ACID Transactions. |
-| **Auth** | **JWT + Bcrypt** | Secure stateless authentication. |
-| **DevOps** | **Docker** | Containerization untuk kemudahan deployment. |
+| Layer        | Technology              | Description                                    |
+| :----------- | :---------------------- | :--------------------------------------------- |
+| **Frontend** | **React 19 + Vite**     | Framework UI modern, cepat, dan ringan.        |
+| **Styling**  | **CSS Modules**         | Desain responsif manual tanpa framework berat. |
+| **Backend**  | **Node.js + Express**   | RESTful API server.                            |
+| **Database** | **MySQL (Aiven Cloud)** | Relational DB dengan ACID Transactions.        |
+| **Auth**     | **JWT + Bcrypt**        | Secure stateless authentication.               |
+| **DevOps**   | **Docker**              | Containerization untuk kemudahan deployment.   |
 
 ---
 
@@ -90,21 +97,24 @@ Dibangun menggunakan stack industri terkini:
 ## 🚀 Instalasi & Menjalankan (Local)
 
 ### Persyaratan
-*   Node.js v18+
-*   MySQL Server (Local atau Cloud)
+
+- Node.js v18+
+- MySQL Server (Local atau Cloud)
 
 ### Cara 1: Standard (Manual)
 
 1.  **Setup Backend**
+
     ```bash
     cd backend
     npm install
-    cp .env.example .env 
+    cp .env.example .env
     # Konfigurasi database di file .env
     npm run dev
     ```
 
 2.  **Setup Frontend**
+
     ```bash
     cd frontend
     npm install
@@ -120,6 +130,7 @@ Jika Docker Desktop sudah terinstall, cukup jalankan satu perintah:
 ```bash
 docker-compose up -d --build
 ```
+
 Aplikasi akan otomatis berjalan di container terisolasi.
 
 ---
@@ -128,19 +139,30 @@ Aplikasi akan otomatis berjalan di container terisolasi.
 
 Gunakan kredensial berikut untuk pengujian:
 
-| Role | Username | Password | Akses |
-| :--- | :--- | :--- | :--- |
-| **Superadmin** | `superadmin` | `password123` | Full Control |
-| **Admin** | `admin` | `password123` | Ops Harian (Stok & Approval) |
-| **User** | `user` | `password123` | Request Only |
+| Role           | Username     | Password      | Akses                        |
+| :------------- | :----------- | :------------ | :--------------------------- |
+| **Superadmin** | `superadmin` | `password123` | Full Control                 |
+| **Admin**      | `admin`      | `password123` | Ops Harian (Stok & Approval) |
+| **User**       | `user`       | `password123` | Request Only                 |
 
 ---
 
 ## 📝 Catatan Implementasi (Untuk Laporan PKL)
 
-*   **Pemisahan Logic Backend**: Validasi stok (negatif check) dan logic transaksi (approval mengurangi stok) dilakukan di Backend menggunakan MySQL Transactions untuk menjamin data tidak korup.
-*   **Security Hardening**: API Endpoint dilindungi Middleware `authorize('role')` sehingga User biasa tidak bisa menembus akses Admin via Imnsomnia/Postman.
-*   **Responsive Strategy**: Menggunakan Custom Hook `useBreakpoint` untuk mendeteksi ukuran layar dan me-render komponen `DesktopLayout` atau `MobileLayout` secara kondisional.
+- **Pemisahan Logic Backend**: Validasi stok (negatif check) dan logic transaksi (approval mengurangi stok) dilakukan di Backend menggunakan MySQL Transactions untuk menjamin data tidak korup.
+- **Security Hardening**: API Endpoint dilindungi Middleware `authorize('role')` sehingga User biasa tidak bisa menembus akses Admin via Imnsomnia/Postman.
+- **Responsive Strategy**: Menggunakan Custom Hook `useBreakpoint` untuk mendeteksi ukuran layar dan me-render komponen `DesktopLayout` atau `MobileLayout` secara kondisional.
+
+## 🎨 Kustomisasi Tampilan (Customization)
+
+### Mengganti Logo Judul dan Favicon Aplikasi
+
+Untuk mengganti logo utama yang muncul di halaman _Login_ dan di pojok kiri atas _Sidebar_:
+
+1. Siapkan 2 file gambar logo Anda dengan nama: `logo.png` (usahakan latar transparan) dan `favicon.ico` (untuk ikon _tab browser_).
+2. Masuk ke folder `frontend/public/`
+3. Timpa (Replace) file `logo.png` dan `favicon.ico` bawaan dengan file Anda yang baru.
+4. _Refresh browser_ Anda (Mungkin perlu `Ctrl + Shift + R` untuk membersihkan _cache_ gambar lama).
 
 ---
 
