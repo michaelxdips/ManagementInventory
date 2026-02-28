@@ -85,5 +85,5 @@ Gunakan _credentials_ di bawah ini untuk mencoba berbagai tingkatan akses:
 
 <div align="center">
   <b>Developed for PKL Project - 2026</b><br/>
-  <i>Membawa Manajemen Inventaris ATK ke Era Digital yang Responsif & Elegan</i>
+  <i>Stephen Michael dan Zaky Musyaffa</i>
 </div>
