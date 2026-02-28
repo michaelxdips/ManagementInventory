@@ -7,6 +7,7 @@ export type Item = {
   quantity: number;
   unit: string;
   location: string;
+  minStock: number;
 };
 
 export type UpdateItemPayload = {
@@ -15,6 +16,7 @@ export type UpdateItemPayload = {
   qty: number;
   satuan: string;
   lokasi_simpan: string;
+  min_stock?: number;
 };
 
 // Backend returns fields using old naming; map to UI shape
@@ -27,6 +29,7 @@ export const fetchItems = () =>
       quantity: r.qty ?? r.stok ?? r.quantity,
       unit: r.satuan ?? r.unit,
       location: r.lokasi_simpan ?? r.location ?? '-',
+      minStock: r.min_stock ?? 5,
     }))
   );
 
@@ -38,6 +41,7 @@ export const getItemById = (id: number) =>
     quantity: r.qty ?? r.stok ?? r.quantity,
     unit: r.satuan ?? r.unit,
     location: r.lokasi_simpan ?? r.location ?? '-',
+    minStock: r.min_stock ?? 5,
   }));
 
 export const updateItem = (id: number, payload: UpdateItemPayload) =>

@@ -3,6 +3,8 @@ import useAuth from '../../../hooks/useAuth';
 import { navItems, getVisibleNavItems } from '../shared/NavItems';
 import Icon from '../shared/Icon';
 import ThemeToggle from '../../ThemeToggle';
+import { useNotifications } from '../../../hooks/useNotifications';
+import NotificationBell from '../../ui/NotificationBell';
 
 /**
  * Desktop Navbar (Topbar) component.
@@ -12,6 +14,9 @@ import ThemeToggle from '../../ThemeToggle';
 const DesktopNavbar = () => {
     const location = useLocation();
     const { hasRole } = useAuth();
+    
+    const token = localStorage.getItem('token');
+    const { notifications, markAllAsRead, clearAll } = useNotifications(token);
 
     const visibleNavItems = getVisibleNavItems(navItems, hasRole);
     const activeTitle = visibleNavItems.find((item) =>
@@ -26,7 +31,14 @@ const DesktopNavbar = () => {
                 </span>
                 <span className="crumb-text">{activeTitle}</span>
             </div>
-            <ThemeToggle />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <NotificationBell 
+                    notifications={notifications} 
+                    onMarkAllAsRead={markAllAsRead} 
+                    onClearAll={clearAll} 
+                />
+                <ThemeToggle />
+            </div>
         </header>
     );
 };

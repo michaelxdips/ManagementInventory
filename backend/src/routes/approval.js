@@ -2,6 +2,7 @@ import { Router } from 'express';
 import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { getWIBDate } from '../utils/date.js';
+import notificationService from '../utils/notificationService.js';
 
 const router = Router();
 
@@ -283,11 +284,23 @@ router.post('/:id/finalize', authenticate, authorize('admin', 'superadmin'), asy
 
         await connection.commit();
 
-        res.json({
+        const responsePayload = {
             message: `Barang keluar dicatat. Stok ${item.nama_barang} berkurang ${qty} (sisa: ${newQty})`,
             finalQty: qty,
-            newStock: newQty
+            newStock: newQty,
+            requestId: request.id,
+            itemName: item.nama_barang
+        };
+
+        // Notify the user that their request was finalized
+        notificationService.sendToUser(request.user_id, 'STATUS_UPDATE', {
+            id: request.id,
+            status: 'APPROVED',
+            item: item.nama_barang,
+            message: `Permintaan ${item.nama_barang} disetujui sebanyak ${qty} ${item.satuan}`
         });
+
+        res.json(responsePayload);
     } catch (error) {
         await connection.rollback();
         console.error('Finalize request error:', error);
@@ -340,7 +353,17 @@ router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), async
             WHERE r.id = ?
         `, [id]);
 
-        res.json(updatedRows[0]);
+        const updatedRequest = updatedRows[0];
+        
+        // Notify the user that their request was rejected
+        notificationService.sendToUser(request.user_id, 'STATUS_UPDATE', {
+            id: request.id,
+            status: 'REJECTED',
+            item: request.item,
+            message: `Permintaan ${request.item} ditolak oleh admin`
+        });
+
+        res.json(updatedRequest);
     } catch (error) {
         await connection.rollback();
         console.error('Reject request error:', error);

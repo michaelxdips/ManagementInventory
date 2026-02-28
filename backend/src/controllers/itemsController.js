@@ -30,7 +30,7 @@ export const getItemById = async (req, res) => {
 export const updateItem = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nama_barang, kode_barang, qty, satuan, lokasi_simpan } = req.body;
+        const { nama_barang, kode_barang, qty, satuan, lokasi_simpan, min_stock } = req.body;
 
         // Check if item exists
         const [rows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [id]);
@@ -65,9 +65,9 @@ export const updateItem = async (req, res) => {
         // Update item
         await pool.execute(`
             UPDATE atk_items 
-            SET nama_barang = ?, kode_barang = ?, qty = ?, satuan = ?, lokasi_simpan = ?
+            SET nama_barang = ?, kode_barang = ?, qty = ?, satuan = ?, lokasi_simpan = ?, min_stock = ?
             WHERE id = ?
-        `, [nama_barang, kode_barang, qty, satuan, lokasi_simpan, id]);
+        `, [nama_barang, kode_barang, qty, satuan, lokasi_simpan, min_stock !== undefined ? min_stock : existing.min_stock, id]);
 
         // Get updated item
         const [updatedRows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [id]);
@@ -80,7 +80,7 @@ export const updateItem = async (req, res) => {
 
 export const createItem = async (req, res) => {
     try {
-        const { nama_barang, kode_barang, qty, satuan, lokasi_simpan } = req.body;
+        const { nama_barang, kode_barang, qty, satuan, lokasi_simpan, min_stock } = req.body;
 
         if (!nama_barang || !satuan) {
             return res.status(400).json({ message: 'Nama barang dan satuan wajib diisi' });
@@ -90,9 +90,9 @@ export const createItem = async (req, res) => {
         const safeQty = (typeof qty === 'number' && qty >= 0) ? qty : 0;
 
         const [result] = await pool.execute(`
-            INSERT INTO atk_items (nama_barang, kode_barang, qty, satuan, lokasi_simpan)
-            VALUES (?, ?, ?, ?, ?)
-        `, [nama_barang, kode_barang || null, safeQty, satuan, lokasi_simpan || null]);
+            INSERT INTO atk_items (nama_barang, kode_barang, qty, satuan, lokasi_simpan, min_stock)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [nama_barang, kode_barang || null, safeQty, satuan, lokasi_simpan || null, min_stock !== undefined ? min_stock : 5]);
 
         const [newRows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [result.insertId]);
         res.status(201).json(newRows[0]);

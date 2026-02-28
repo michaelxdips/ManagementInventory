@@ -4,6 +4,8 @@ import useAuth from '../../../hooks/useAuth';
 import { navItems, getVisibleNavItems } from '../shared/NavItems';
 import Icon from '../shared/Icon';
 import ThemeToggle from '../../ThemeToggle';
+import { useNotifications } from '../../../hooks/useNotifications';
+import NotificationBell from '../../ui/NotificationBell';
 
 /**
  * Mobile Navbar (Top Navigation) component.
@@ -16,6 +18,9 @@ const MobileNavbar = () => {
     const { hasRole, user, logout } = useAuth();
     const [menuOpen, setMenuOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
+
+    const token = localStorage.getItem('token');
+    const { notifications, markAllAsRead, clearAll } = useNotifications(token);
 
     const displayName = user?.name ?? 'User';
     const displayRole = user?.role ?? 'user';
@@ -68,7 +73,14 @@ const MobileNavbar = () => {
                     <span>{activeTitle}</span>
                 </div>
 
-                <ThemeToggle />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <NotificationBell 
+                        notifications={notifications} 
+                        onMarkAllAsRead={markAllAsRead} 
+                        onClearAll={clearAll} 
+                    />
+                    <ThemeToggle />
+                </div>
             </header>
 
             {/* Mobile Drawer Menu */}

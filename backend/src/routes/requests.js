@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../config/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import notificationService from '../utils/notificationService.js';
 
 const router = Router();
 
@@ -76,6 +77,10 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
     `, [date, validItemName, qty, unit, receiver, dept, req.user.id, validItemId]);
 
         const [newRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [result.insertId]);
+        
+        // Broadcast to admins that a new request arrived
+        notificationService.broadcast('NEW_REQUEST', newRows[0]);
+        
         res.status(201).json(newRows[0]);
     } catch (error) {
         console.error('Create request error:', error);

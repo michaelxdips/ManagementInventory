@@ -153,11 +153,8 @@ const seed = async () => {
     const users = [
       { name: 'Super Admin', username: 'superadmin', password: 'admin123', role: 'superadmin' },
       { name: 'Admin 1', username: 'admin1', password: 'admin123', role: 'admin' },
-      { name: 'Admin 2', username: 'admin2', password: 'admin123', role: 'admin' },
       { name: 'Share Service & General Support', username: 'ssgs', password: 'user123', role: 'user' },
       { name: 'Performance, Risk & QOS', username: 'prq', password: 'user123', role: 'user' },
-      { name: 'Finance', username: 'finance', password: 'user123', role: 'user' },
-      { name: 'IT Support', username: 'itsupport', password: 'user123', role: 'user' },
       { name: 'Lgs', username: 'lgs', password: 'user123', role: 'user' },
       { name: 'bs', username: 'bs', password: 'user123', role: 'user' },
       { name: 'pai', username: 'pai', password: 'user123', role: 'user' },
