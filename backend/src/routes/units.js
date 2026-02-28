@@ -74,33 +74,42 @@ router.post('/', authenticate, authorize('superadmin'), async (req, res) => {
 
 // DELETE /api/units/:id - Delete a unit - SUPERADMIN ONLY
 router.delete('/:id', authenticate, authorize('superadmin'), async (req, res) => {
+    const connection = await pool.getConnection();
     try {
         const { id } = req.params;
 
+        await connection.beginTransaction();
+
         // Check if unit exists
-        const [unitRows] = await pool.query('SELECT * FROM users WHERE id = ? AND role = ?', [id, 'user']);
+        const [unitRows] = await connection.query('SELECT * FROM users WHERE id = ? AND role = ?', [id, 'user']);
         if (unitRows.length === 0) {
+            await connection.rollback();
             return res.status(404).json({ message: 'Unit tidak ditemukan' });
         }
 
         // OPTIMIZATION: Orphan Data Protection
         // Check if user has associated requests
-        const [reqRows] = await pool.query('SELECT 1 FROM requests WHERE user_id = ? LIMIT 1', [id]);
+        const [reqRows] = await connection.query('SELECT 1 FROM requests WHERE user_id = ? LIMIT 1', [id]);
         if (reqRows.length > 0) {
+            await connection.rollback();
             return res.status(400).json({
                 message: 'Tidak dapat menghapus unit ini karena memiliki riwayat request. Nonaktifkan akun jika perlu.'
             });
         }
 
         // Delete associated unit quotas first
-        await pool.execute('DELETE FROM unit_quota WHERE unit_id = ?', [id]);
+        await connection.execute('DELETE FROM unit_quota WHERE unit_id = ?', [id]);
 
-        await pool.execute('DELETE FROM users WHERE id = ?', [id]);
+        await connection.execute('DELETE FROM users WHERE id = ?', [id]);
 
+        await connection.commit();
         res.status(204).send();
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error('Delete unit error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        if (connection) connection.release();
     }
 });
 

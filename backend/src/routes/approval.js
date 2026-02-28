@@ -20,7 +20,7 @@ router.get('/', authenticate, authorize('admin', 'superadmin'), async (req, res)
         r.dept,
         LOWER(r.status) as status
       FROM requests r
-      LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
+      LEFT JOIN atk_items a ON r.atk_item_id = a.id
       WHERE r.status IN ('PENDING', 'APPROVAL_REVIEW')
       ORDER BY r.created_at DESC
     `);
@@ -56,7 +56,7 @@ router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), asyn
         }
 
         // Step 3: Find the item in inventory
-        const [itemRows] = await connection.query('SELECT * FROM atk_items WHERE LOWER(nama_barang) = LOWER(?) FOR UPDATE', [request.item]);
+        const [itemRows] = await connection.query('SELECT * FROM atk_items WHERE id = ? FOR UPDATE', [request.atk_item_id]);
         const item = itemRows[0];
 
         if (!item) {
@@ -106,7 +106,7 @@ router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), asyn
                 r.dept,
                 'approved' as status
             FROM requests r
-            LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
+            LEFT JOIN atk_items a ON r.atk_item_id = a.id
             WHERE r.id = ?
         `, [id]);
 
@@ -145,7 +145,7 @@ router.get('/:id/detail', authenticate, authorize('admin', 'superadmin'), async 
                 COALESCE(a.qty, 0) as stok_tersedia,
                 COALESCE(a.satuan, r.unit) as satuan
             FROM requests r
-            LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
+            LEFT JOIN atk_items a ON r.atk_item_id = a.id
             WHERE r.id = ?
         `, [id]);
 
@@ -244,7 +244,7 @@ router.post('/:id/finalize', authenticate, authorize('admin', 'superadmin'), asy
         }
 
         // Step 4: Find and lock inventory item
-        const [itemRows] = await connection.query('SELECT * FROM atk_items WHERE LOWER(nama_barang) = LOWER(?) FOR UPDATE', [request.item]);
+        const [itemRows] = await connection.query('SELECT * FROM atk_items WHERE id = ? FOR UPDATE', [request.atk_item_id]);
         const item = itemRows[0];
 
         if (!item) {
@@ -336,7 +336,7 @@ router.post('/:id/reject', authenticate, authorize('admin', 'superadmin'), async
                 r.dept,
                 'rejected' as status
             FROM requests r
-            LEFT JOIN atk_items a ON LOWER(r.item) = LOWER(a.nama_barang)
+            LEFT JOIN atk_items a ON r.atk_item_id = a.id
             WHERE r.id = ?
         `, [id]);
 

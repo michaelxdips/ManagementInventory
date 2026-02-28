@@ -71,6 +71,7 @@ router.put('/password', authenticate, async (req, res) => {
 
 // DELETE /api/users/account - Delete current user account
 router.delete('/account', authenticate, async (req, res) => {
+    const connection = await pool.getConnection();
     try {
         const { password } = req.body;
 
@@ -78,42 +79,51 @@ router.delete('/account', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'Password konfirmasi diperlukan untuk menghapus akun' });
         }
 
+        await connection.beginTransaction();
+
         // Verify password first
-        const [userRows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+        const [userRows] = await connection.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
         const user = userRows[0];
         const isValid = bcrypt.compareSync(password, user.password_hash);
 
         if (!isValid) {
+            await connection.rollback();
             return res.status(401).json({ message: 'Password salah. Gagal menghapus akun.' });
         }
 
         // Don't allow deleting superadmin accounts easily
         if (req.user.role === 'superadmin') {
             // Check if this is the last superadmin
-            const [countRows] = await pool.query('SELECT COUNT(*) as count FROM users WHERE role = ?', ['superadmin']);
+            const [countRows] = await connection.query('SELECT COUNT(*) as count FROM users WHERE role = ?', ['superadmin']);
             if (countRows[0].count <= 1) {
+                await connection.rollback();
                 return res.status(400).json({ message: 'Tidak dapat menghapus superadmin terakhir' });
             }
         }
 
         // OPTIMIZATION: Orphan Data Protection
         // Check if user has associated requests
-        const [reqRows] = await pool.query('SELECT 1 FROM requests WHERE user_id = ? LIMIT 1', [req.user.id]);
+        const [reqRows] = await connection.query('SELECT 1 FROM requests WHERE user_id = ? LIMIT 1', [req.user.id]);
         if (reqRows.length > 0) {
+            await connection.rollback();
             return res.status(400).json({
                 message: 'Tidak dapat menghapus akun karena memiliki riwayat peminjaman. Hubungi admin untuk penonaktifan.'
             });
         }
 
         // Delete associated unit quotas first
-        await pool.execute('DELETE FROM unit_quota WHERE unit_id = ?', [req.user.id]);
+        await connection.execute('DELETE FROM unit_quota WHERE unit_id = ?', [req.user.id]);
 
-        await pool.execute('DELETE FROM users WHERE id = ?', [req.user.id]);
+        await connection.execute('DELETE FROM users WHERE id = ?', [req.user.id]);
 
+        await connection.commit();
         res.status(204).send();
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error('Delete account error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        if (connection) connection.release();
     }
 });
 

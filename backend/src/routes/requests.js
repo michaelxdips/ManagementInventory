@@ -51,7 +51,7 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
         }
 
         // FIX: Validate item exists in inventory (Case Insensitive) AND use correct name
-        const [itemRows] = await pool.query('SELECT nama_barang, satuan FROM atk_items WHERE LOWER(nama_barang) = LOWER(?)', [item]);
+        const [itemRows] = await pool.query('SELECT id, nama_barang, satuan FROM atk_items WHERE LOWER(nama_barang) = LOWER(?)', [item]);
 
         if (itemRows.length === 0) {
             return res.status(400).json({
@@ -59,6 +59,7 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
             });
         }
 
+        const validItemId = itemRows[0].id;
         const validItemName = itemRows[0].nama_barang;
 
         // Validate dept exists as a registered unit
@@ -70,9 +71,9 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
         }
 
         const [result] = await pool.execute(`
-      INSERT INTO requests (date, item, qty, unit, receiver, dept, status, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?)
-    `, [date, validItemName, qty, unit, receiver, dept, req.user.id]);
+      INSERT INTO requests (date, item, qty, unit, receiver, dept, status, user_id, atk_item_id)
+      VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?)
+    `, [date, validItemName, qty, unit, receiver, dept, req.user.id, validItemId]);
 
         const [newRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [result.insertId]);
         res.status(201).json(newRows[0]);
