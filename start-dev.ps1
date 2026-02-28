@@ -1,14 +1,16 @@
-Write-Host "🚀 Starting Inventory System..."
+$ErrorActionPreference = "Continue"
 
-# Start Backend
-Write-Host "Starting Backend Server..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; npm run dev"
+Write-Host "🚀 Starting Inventory System..." -ForegroundColor Cyan
+$wt = Get-Command wt.exe -ErrorAction SilentlyContinue
 
-# Wait a bit for backend to initialize
-Start-Sleep -Seconds 2
+if ($wt) {
+    Write-Host "✨ Windows Terminal detected! Opening split-pane..." -ForegroundColor Yellow
+    wt.exe new-tab -d "$PSScriptRoot\backend" cmd /k "title Backend Server && npm run dev" `; split-pane -d "$PSScriptRoot\frontend" cmd /k "title Frontend Server && npm run dev"
+}
+else {
+    Write-Host "✨Opening Split Command Prompt..." -ForegroundColor Yellow
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/k title Backend Server && cd `"$PSScriptRoot\backend`" && npm run dev"
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/k title Frontend Server && cd `"$PSScriptRoot\frontend`" && npm run dev"
+}
 
-# Start Frontend
-Write-Host "Starting Frontend Server..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd frontend; npm run dev"
-
-Write-Host "✅ System Starting! Check the new windows."
+Write-Host "✅ Server booting!." -ForegroundColor Green

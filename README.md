@@ -75,11 +75,11 @@ _Aplikasi web Anda akan menyala di `http://localhost:5173`._
 
 Gunakan _credentials_ di bawah ini untuk mencoba berbagai tingkatan akses:
 
-| Akses Pengguna | Username     | Password      | Tipe Kekuasaan                                            |
-| :------------- | :----------- | :------------ | :-------------------------------------------------------- |
-| **Superadmin** | `superadmin` | `password123` | ✨ _God Mode_ (Manajemen User & Ubah Detail Katalog)      |
-| **Admin**      | `admin`      | `password123` | 📦 _Operasional_ (Tambah Stok Master & _Approve_ Request) |
-| **User**       | `user`       | `password123` | 👤 _Basic Access_ (Melihat Katalog Stok & Meminta Barang) |
+| Akses Pengguna | Username     | Password   | Tipe Kekuasaan                                            |
+| :------------- | :----------- | :--------- | :-------------------------------------------------------- |
+| **Superadmin** | `superadmin` | `admin123` | ✨ _God Mode_ (Manajemen User & Ubah Detail Katalog)      |
+| **Admin**      | `admin`      | `admin123` | 📦 _Operasional_ (Tambah Stok Master & _Approve_ Request) |
+| **User**       | `user`       | `user123`  | 👤 _Basic Access_ (Melihat Katalog Stok & Meminta Barang) |
 
 ---
 
