@@ -43,16 +43,113 @@ const BarangKosong = () => {
   return (
     <div className="history-page">
       <style>{`
+        /* Print Header - Only visible when printing */
+        .print-header {
+          display: none;
+        }
+
         @media print {
-          body { background: #fff; }
-          .app-shell__sidebar, .app-shell__header, nav { display: none !important; }
-          .history-page { padding: 0; }
-          .history-card { box-shadow: none; border: none; }
-          .print-action { display: none !important; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #000; padding: 8px; }
+          @page {
+            /* Set print margins */
+            margin: 20mm;
+          }
+          
+          body { 
+            background: #fff; 
+            color: #000;
+          }
+
+          /* Hide UI elements not meant for print */
+          .sidebar, 
+          .topbar, 
+          .mobile-topbar, 
+          .mobile-bottom-nav, 
+          .mobile-drawer, 
+          .mobile-drawer-overlay, 
+          .print-action, 
+          .mobile-card-list { 
+            display: none !important; 
+          }
+
+          /* Reset layouts that might constrain height or add scrollbars */
+          .app-shell, 
+          .desktop-layout, 
+          .mobile-layout, 
+          .main-panel, 
+          .content-area, 
+          .history-page { 
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            grid-template-columns: 1fr !important;
+          }
+
+          /* Force Desktop Table to show and remove card styling */
+          .table-shell, 
+          .history-card { 
+            display: block !important;
+            overflow: visible !important;
+            box-shadow: none !important; 
+            border: none !important; 
+            padding: 0 !important;
+          }
+
+          .requests-header,
+          .history-title {
+            display: none !important;
+          }
+
+          /* Make table printer-friendly */
+          table { 
+            width: 100% !important; 
+            min-width: 0 !important;
+            max-width: 100% !important;
+            border-collapse: collapse !important; 
+            page-break-inside: auto !important;
+          }
+          tr { 
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+          }
+          th, td { 
+            border: 1px solid #000 !important; 
+            padding: 8px 12px !important; 
+            text-align: left !important;
+            color: #000 !important;
+          }
+          th {
+            background-color: #f0f0f0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          /* Show custom print header */
+          .print-header {
+            display: block !important;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+          }
+          .print-header h1 {
+            margin: 0 0 4px 0;
+            font-size: 24px;
+          }
+          .print-header p {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+          }
         }
       `}</style>
+
+      {/* Actual Print Header rendered in DOM but hidden via CSS unless printing */}
+      <div className="print-header">
+        <h1>Laporan Barang Kosong</h1>
+        <p>Inventory ATK</p>
+        <p>Dicetak pada: {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+      </div>
 
       <div className="requests-header section-spacer-sm">
         <h2 className="history-title">List Barang Kosong</h2>

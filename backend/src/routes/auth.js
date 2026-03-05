@@ -5,10 +5,10 @@ import pool from '../config/db.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-    console.warn('WARNING: Using default JWT_SECRET in production. Please set JWT_SECRET environment variable.');
+    throw new Error('FATAL: JWT_SECRET environment variable is required in production. Server cannot start without it.');
 }
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // POST /api/auth/login

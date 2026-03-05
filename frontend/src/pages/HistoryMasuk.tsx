@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../components/ui/Button';
 import Pagination from '../components/ui/Pagination';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Table';
@@ -46,16 +46,12 @@ const HistoryMasuk = () => {
     setPage(1);
   }, [from, to]);
 
-  const filtered = useMemo(() => {
-    // Data is already filtered and sorted by backend
-    return data;
-  }, [data]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const totalPages = Math.max(1, Math.ceil(data.length / perPage));
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * perPage;
-  const endIndex = Math.min(startIndex + perPage, filtered.length);
-  const pageRows = filtered.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + perPage, data.length);
+  const pageRows = data.slice(startIndex, endIndex);
 
   const handleApply = () => {
     const nextFrom = parseDate(draftFrom);
@@ -202,7 +198,7 @@ const HistoryMasuk = () => {
 
         <div className="items-footer">
           <span className="items-meta">
-            Menampilkan {startIndex + 1} - {endIndex} dari {filtered.length} barang
+            Menampilkan {startIndex + 1} - {endIndex} dari {data.length} barang
           </span>
           <Pagination current={currentPage} total={totalPages} onChange={setPage} />
         </div>

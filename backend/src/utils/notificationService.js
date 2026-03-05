@@ -2,16 +2,18 @@
 
 class NotificationService {
     constructor() {
-        // Store client connections: { userId: Set(response_object) }
+        // Store client connections: { userId: { role, connections: Set(response_object) } }
         this.clients = new Map();
     }
 
-    // Add a new client connection
-    addClient(userId, res) {
+    // Add a new client connection with their role
+    addClient(userId, res, role) {
         if (!this.clients.has(userId)) {
-            this.clients.set(userId, new Set());
+            this.clients.set(userId, { role, connections: new Set() });
         }
-        this.clients.get(userId).add(res);
+        const client = this.clients.get(userId);
+        client.role = role; // Update role in case it changed
+        client.connections.add(res);
 
         // Keep connection alive
         const keepAlive = setInterval(() => {
@@ -27,10 +29,10 @@ class NotificationService {
 
     // Remove a closed connection
     removeClient(userId, res) {
-        const userClients = this.clients.get(userId);
-        if (userClients) {
-            userClients.delete(res);
-            if (userClients.size === 0) {
+        const client = this.clients.get(userId);
+        if (client) {
+            client.connections.delete(res);
+            if (client.connections.size === 0) {
                 this.clients.delete(userId);
             }
         }
@@ -38,21 +40,28 @@ class NotificationService {
 
     // Send event to a specific user (e.g., when their request is approved)
     sendToUser(userId, event, payload) {
-        const userClients = this.clients.get(userId);
-        if (userClients) {
+        const client = this.clients.get(userId);
+        if (client) {
             const dataString = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
-            userClients.forEach(res => res.write(dataString));
+            client.connections.forEach(res => res.write(dataString));
         }
     }
 
-    // Send event to ALL users with specific roles (e.g., alert all admins of new request)
-    // Needs access to user roles, typically we'd look this up but we'll broadcast 
-    // to a special "admin" channel or track roles in the clients map.
-    // simpler approach: broadcast to everyone, let frontend ignore if not admin
+    // Send event only to admin/superadmin users (e.g., new request notification)
+    broadcastToAdmins(event, payload) {
+        const dataString = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
+        this.clients.forEach(client => {
+            if (client.role === 'admin' || client.role === 'superadmin') {
+                client.connections.forEach(res => res.write(dataString));
+            }
+        });
+    }
+
+    // Send event to ALL connected users (use sparingly)
     broadcast(event, payload) {
         const dataString = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
-        this.clients.forEach(userClients => {
-            userClients.forEach(res => res.write(dataString));
+        this.clients.forEach(client => {
+            client.connections.forEach(res => res.write(dataString));
         });
     }
 }
@@ -60,3 +69,4 @@ class NotificationService {
 // Singleton instance
 const notificationService = new NotificationService();
 export default notificationService;
+

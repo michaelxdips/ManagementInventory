@@ -79,7 +79,7 @@ router.post('/', authenticate, authorize('user', 'admin', 'superadmin'), async (
         const [newRows] = await pool.query('SELECT * FROM requests WHERE id = ?', [result.insertId]);
         
         // Broadcast to admins that a new request arrived
-        notificationService.broadcast('NEW_REQUEST', newRows[0]);
+        notificationService.broadcastToAdmins('NEW_REQUEST', newRows[0]);
         
         res.status(201).json(newRows[0]);
     } catch (error) {

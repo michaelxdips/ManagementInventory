@@ -31,7 +31,7 @@ export const useNotifications = (token: string | null) => {
     }
 
     // Connect to SSE stream
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
     // EventSource doesn't support custom headers natively in browser API (only with polyfills).
     // The standard way is to pass token in URL.
     const eventSource = new EventSource(`${API_URL}/notifications/stream?token=${token}`);

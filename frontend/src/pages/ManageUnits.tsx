@@ -82,7 +82,7 @@ const ManageUnits = () => {
   return (
     <div className="history-page">
       <div className="requests-header section-spacer-sm">
-        <h2 className="history-title">List User</h2>
+        <h2 className="history-title">List Unit</h2>
         <Button type="button" variant="secondary" onClick={() => navigate('/manage-units/create')}>
           <UserPlusIcon />
           <span>Tambah Unit</span>

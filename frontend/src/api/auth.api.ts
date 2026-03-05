@@ -1,11 +1,11 @@
-import api from './axios';
+import { http } from './http';
 import { AuthUser, LoginPayload } from '../types/auth';
 
 type LoginResponse = { user: AuthUser; token: string };
 
 export const loginApi = async (payload: LoginPayload): Promise<AuthUser> => {
   try {
-    const { data } = await api.post<LoginResponse>('/auth/login', payload);
+    const data = await http.post<LoginResponse>('/auth/login', payload);
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.token);
     }
@@ -20,7 +20,7 @@ export const loginApi = async (payload: LoginPayload): Promise<AuthUser> => {
 
 export const logoutApi = async (): Promise<void> => {
   try {
-    await api.post('/auth/logout');
+    await http.post('/auth/logout');
   } finally {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
@@ -30,7 +30,7 @@ export const logoutApi = async (): Promise<void> => {
 
 export const meApi = async (): Promise<AuthUser | null> => {
   try {
-    const { data } = await api.get<AuthUser>('/auth/me');
+    const data = await http.get<AuthUser>('/auth/me');
     return data;
   } catch (err) {
     if (typeof window !== 'undefined') {
@@ -39,3 +39,4 @@ export const meApi = async (): Promise<AuthUser | null> => {
     return null;
   }
 };
+

@@ -35,7 +35,8 @@ const PasswordSettings = () => {
 			setNewPassword('');
 			setConfirmPassword('');
 		} catch (err: any) {
-			showToast(err.response?.data?.message || 'Gagal memperbarui password');
+			const msg = typeof err?.message === 'string' ? (() => { try { return JSON.parse(err.message).message; } catch { return err.message; } })() : 'Gagal memperbarui password';
+			showToast(msg || 'Gagal memperbarui password');
 		} finally {
 			setSaving(false);
 		}

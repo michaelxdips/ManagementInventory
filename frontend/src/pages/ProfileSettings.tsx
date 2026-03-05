@@ -45,7 +45,8 @@ const ProfileSettings = () => {
 			updateUser(updatedUser); // Update context instantly
 			setMessage('Profil berhasil disimpan');
 		} catch (err: any) {
-			showToast(err.response?.data?.message || 'Gagal menyimpan profil');
+			const msg = typeof err?.message === 'string' ? (() => { try { return JSON.parse(err.message).message; } catch { return err.message; } })() : 'Gagal menyimpan profil';
+			showToast(msg || 'Gagal menyimpan profil');
 		} finally {
 			setSaving(false);
 		}
@@ -73,7 +74,8 @@ const ProfileSettings = () => {
 			await logout(); // Clear context and redirect
 			navigate('/login');
 		} catch (err: any) {
-			showToast(err.response?.data?.message || 'Gagal menghapus akun. Password mungkin salah.');
+			const msg = typeof err?.message === 'string' ? (() => { try { return JSON.parse(err.message).message; } catch { return err.message; } })() : 'Gagal menghapus akun. Password mungkin salah.';
+			showToast(msg || 'Gagal menghapus akun. Password mungkin salah.');
 			setSaving(false);
 			// setShowConfirm(false); // Keep open on error so user can retry
 		}

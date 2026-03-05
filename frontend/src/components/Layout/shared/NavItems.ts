@@ -22,7 +22,7 @@ export const navItems: NavItem[] = [
     { label: 'Barang Kosong', path: '/barang-kosong', icon: 'empty', roles: ['admin', 'superadmin'] },
     { label: 'Approval', path: '/approval', icon: 'check', roles: ['admin', 'superadmin'] },
     { label: 'Request Baru', path: '/new-item-requests', icon: 'star', roles: ['admin', 'superadmin'] },
-    { label: 'Kelola Unit', path: '/manage-units', icon: 'users', roles: ['superadmin'] },
+    { label: 'Kelola Unit', path: '/manage-units', icon: 'units', roles: ['superadmin'] },
 ];
 
 /**

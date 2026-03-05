@@ -1,4 +1,4 @@
-import { createContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { loginApi, logoutApi, meApi } from '../api/auth.api';
 import { AuthUser, LoginPayload, Role } from '../types/auth';
 
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const login = async (payload: LoginPayload) => {
+  const login = useCallback(async (payload: LoginPayload) => {
     setLoading(true);
     try {
       const loggedIn = await loginApi(payload);
@@ -49,9 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setLoading(true);
     try {
       await logoutApi();
@@ -59,18 +59,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const hasRole = (roles: Role[]) => {
+  const hasRole = useCallback((roles: Role[]) => {
     if (!user) return false;
     return roles.includes(user.role);
-  };
+  }, [user]);
 
-  const updateUser = (updatedUser: AuthUser) => {
+  const updateUser = useCallback((updatedUser: AuthUser) => {
     setUser(updatedUser);
-  };
+  }, []);
 
-  const value = useMemo(() => ({ user, loading: loading && !authChecked, login, logout, hasRole, updateUser }), [user, loading, authChecked]);
+  const value = useMemo(() => ({ user, loading: loading && !authChecked, login, logout, hasRole, updateUser }), [user, loading, authChecked, login, logout, hasRole, updateUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
