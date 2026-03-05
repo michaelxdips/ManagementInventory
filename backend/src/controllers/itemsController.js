@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import notificationService from '../utils/notificationService.js';
 
 export const getAllItems = async (req, res) => {
     try {
@@ -68,6 +69,21 @@ export const updateItem = async (req, res) => {
             SET nama_barang = ?, kode_barang = ?, qty = ?, satuan = ?, lokasi_simpan = ?, min_stock = ?
             WHERE id = ?
         `, [nama_barang, kode_barang, qty, satuan, lokasi_simpan, min_stock !== undefined ? min_stock : existing.min_stock, id]);
+
+        // Trigger LOW_STOCK warning if quantity drops below minimum
+        const minStockLimit = min_stock !== undefined && min_stock !== null ? min_stock : (existing.min_stock !== null ? existing.min_stock : 5);
+        if (typeof qty === 'number' && qty <= minStockLimit && existing.qty > minStockLimit) {
+            const finalName = nama_barang || existing.nama_barang;
+            const finalSatuan = satuan || existing.satuan;
+            notificationService.broadcastToAdmins('LOW_STOCK', {
+                item: finalName,
+                remaining: qty,
+                min: minStockLimit,
+                message: qty === 0 
+                  ? `Stok ${finalName} HABIS! Segera restock.` 
+                  : `Stok ${finalName} menipis (sisa ${qty} ${finalSatuan}). Segera restock.`
+            });
+        }
 
         // Get updated item
         const [updatedRows] = await pool.query('SELECT * FROM atk_items WHERE id = ?', [id]);

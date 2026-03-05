@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 export interface AppNotification {
   id: string; // generated client-side for keys
-  type: 'NEW_REQUEST' | 'STATUS_UPDATE';
+  type: 'NEW_REQUEST' | 'STATUS_UPDATE' | 'LOW_STOCK';
   data: any;
   title: string;
   message: string;
@@ -75,6 +75,31 @@ export const useNotifications = (token: string | null) => {
         setNotifications(prev => [newNotif, ...prev]);
       } catch (err) {
         console.error('Error parsing NEW_REQUEST', err);
+      }
+    });
+
+    // Specific event: LOW_STOCK (for admins)
+    eventSource.addEventListener('LOW_STOCK', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const newNotif: AppNotification = {
+          id: `low_stock_${Date.now()}_${Math.random()}`,
+          type: 'LOW_STOCK',
+          data,
+          title: data.remaining === 0 ? 'Stok Habis! 🚨' : 'Peringatan Stok Minimum ⚠️',
+          message: data.message,
+          read: false,
+          timestamp: new Date(),
+        };
+        
+        // Show browser notification if permitted
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification(newNotif.title, { body: newNotif.message });
+        }
+
+        setNotifications(prev => [newNotif, ...prev]);
+      } catch (err) {
+        console.error('Error parsing LOW_STOCK', err);
       }
     });
 

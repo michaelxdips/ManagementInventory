@@ -85,6 +85,19 @@ router.post('/:id/approve', authenticate, authorize('admin', 'superadmin'), asyn
         // Step 6: REDUCE stock
         await connection.execute('UPDATE atk_items SET qty = ? WHERE id = ?', [newQty, item.id]);
 
+        // Trigger LOW_STOCK warning if applicable
+        const minStockLimit = item.min_stock !== undefined && item.min_stock !== null ? item.min_stock : 5;
+        if (newQty <= minStockLimit) {
+            notificationService.broadcastToAdmins('LOW_STOCK', {
+                item: item.nama_barang,
+                remaining: newQty,
+                min: minStockLimit,
+                message: newQty === 0 
+                  ? `Stok ${item.nama_barang} HABIS! Segera restock.` 
+                  : `Stok ${item.nama_barang} menipis (sisa ${newQty} ${item.satuan}). Segera restock.`
+            });
+        }
+
         // Step 7: Record barang keluar
         const today = getWIBDate();
         await connection.execute(`
@@ -272,6 +285,19 @@ router.post('/:id/finalize', authenticate, authorize('admin', 'superadmin'), asy
 
         // Step 7: REDUCE stock
         await connection.execute('UPDATE atk_items SET qty = ? WHERE id = ?', [newQty, item.id]);
+
+        // Trigger LOW_STOCK warning if applicable
+        const minStockLimit = item.min_stock !== undefined && item.min_stock !== null ? item.min_stock : 5;
+        if (newQty <= minStockLimit) {
+            notificationService.broadcastToAdmins('LOW_STOCK', {
+                item: item.nama_barang,
+                remaining: newQty,
+                min: minStockLimit,
+                message: newQty === 0 
+                  ? `Stok ${item.nama_barang} HABIS! Segera restock.` 
+                  : `Stok ${item.nama_barang} menipis (sisa ${newQty} ${item.satuan}). Segera restock.`
+            });
+        }
 
 
 
