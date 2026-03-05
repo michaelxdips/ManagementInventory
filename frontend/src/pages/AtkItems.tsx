@@ -275,7 +275,7 @@ const AtkItems = () => {
 							</TR>
 						) : (
 							displayItems.map((item, idx) => {
-								const isLowStock = item.quantity <= (item.minStock || 5) && item.quantity > 0;
+								const isLowStock = item.quantity <= (item.minStock ?? 5) && item.quantity > 0;
 								const isOutOfStock = item.quantity === 0;
 								return (
 									<TR key={item.id} className={isOutOfStock ? 'row-danger' : isLowStock ? 'row-warning' : ''}>
@@ -322,9 +322,12 @@ const AtkItems = () => {
 					isLoading={loading}
 					emptyMessage="Tidak ada data barang"
 				>
-					{displayItems.map((item, idx) => (
+					{displayItems.map((item, idx) => {
+						const isLowStock = item.quantity <= (item.minStock ?? 5) && item.quantity > 0;
+						return (
 						<MobileCard
 							key={item.id}
+							className={item.quantity <= 0 ? 'card-danger' : isLowStock ? 'card-warning' : ''}
 							header={
 								<>
 									<span className="mobile-card-header-title">{item.name}</span>
@@ -356,7 +359,8 @@ const AtkItems = () => {
 								)
 							}
 						/>
-					))}
+						);
+					})}
 				</MobileCardList>
 
 				<div className="items-footer">

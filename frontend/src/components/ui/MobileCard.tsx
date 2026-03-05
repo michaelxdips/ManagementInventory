@@ -10,6 +10,7 @@ interface MobileCardProps {
     fields: MobileCardField[];
     actions?: ReactNode;
     header?: ReactNode;
+    className?: string;
 }
 
 /**
@@ -20,9 +21,9 @@ interface MobileCardProps {
  * - Pass fields array with label/value pairs
  * - Pass actions for action buttons (Approve, Reject, Edit, etc.)
  */
-export const MobileCard = ({ fields, actions, header }: MobileCardProps) => {
+export const MobileCard = ({ fields, actions, header, className }: MobileCardProps) => {
     return (
-        <div className="mobile-card-item">
+        <div className={`mobile-card-item ${className || ''}`.trim()}>
             {header && <div className="mobile-card-header">{header}</div>}
             <div className="mobile-card-body">
                 {fields.map((field, idx) => (

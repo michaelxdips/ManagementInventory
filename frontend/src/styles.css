@@ -2101,6 +2101,16 @@ a {
     box-shadow 0.15s ease;
 }
 
+.mobile-card-item.card-warning {
+  border-left: 4px solid #f6a623;
+  background-color: var(--warning-bg);
+}
+
+.mobile-card-item.card-danger {
+  border-left: 4px solid #dc3545;
+  background-color: var(--danger-bg);
+}
+
 .mobile-card-item:active {
   transform: scale(0.99);
 }
