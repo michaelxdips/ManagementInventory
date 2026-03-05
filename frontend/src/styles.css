@@ -843,6 +843,14 @@ a {
   font-size: 14px;
 }
 
+.items-table td.empty-row {
+  text-align: center;
+  padding: 48px 14px;
+  color: var(--text-dim);
+  font-style: italic;
+  height: 380px; /* Force minimum height to avoid layout shift */
+}
+
 .items-table tr.row-danger td {
   background-color: var(--danger-bg);
   opacity: 0.8;
