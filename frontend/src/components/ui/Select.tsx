@@ -9,7 +9,7 @@ const Select = forwardRef<HTMLSelectElement, Props>(({ label, className, id, chi
   return (
     <label className="form-field">
       {label && (
-        <span className="form-label" htmlFor={id}>
+        <span className="form-label">
           {label}
         </span>
       )}

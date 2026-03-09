@@ -10,7 +10,7 @@ const Input = forwardRef<HTMLInputElement, Props>(({ label, helper, className, i
   return (
     <label className="form-field">
       {label && (
-        <span className="form-label" htmlFor={id}>
+        <span className="form-label">
           {label}
         </span>
       )}
