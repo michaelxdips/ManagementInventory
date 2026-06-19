@@ -70,6 +70,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(updatedUser);
   }, []);
 
+  // Listen for unauthorized events dispatched by http.ts (instead of hard reloads)
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
   const value = useMemo(() => ({ user, loading: loading && !authChecked, login, logout, hasRole, updateUser }), [user, loading, authChecked, login, logout, hasRole, updateUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

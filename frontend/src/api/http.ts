@@ -31,7 +31,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_data');
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        // Dispatch a custom event so React Router can navigate without a hard reload.
+        // A hard reload (window.location.href) would restart the entire app and
+        // re-trigger SSE connections, causing a reload loop.
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
       }
     }
     const text = await res.text();
