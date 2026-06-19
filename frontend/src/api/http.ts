@@ -1,8 +1,17 @@
 const getBaseUrl = () => {
+  // VITE_API_BASE_URL must be set in Vercel dashboard for production.
+  // In local dev it falls back to localhost:3000.
   if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  if (hostname.includes('vercel.app')) return `https://${hostname}/api`;
-  return `http://${hostname}:3000/api`;
+
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('192.168')) {
+    // Running on a remote domain but env var is not set — log a clear warning.
+    console.error(
+      '[http.ts] VITE_API_BASE_URL is not set! '
+      + 'API calls will fail. Set this env var in your Vercel/hosting dashboard.'
+    );
+  }
+
+  return 'http://localhost:3000/api';
 };
 const API_BASE = getBaseUrl();
 
