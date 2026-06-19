@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: management-inventory-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false   # Set manually in Render dashboard
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: DB_HOST
+        sync: false   # Set manually in Render dashboard
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+      - key: FRONTEND_URL
+        sync: false   # Set to your Vercel frontend URL, e.g. https://management-inventory.vercel.app

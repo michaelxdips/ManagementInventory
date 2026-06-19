@@ -22,10 +22,26 @@ import notificationsRoutes from './routes/notifications.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - Allow all origins for local network access
+// Middleware - CORS for local dev + Vercel production frontend
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
+
 app.use(cors({
-    origin: true, // Allow any origin (for local network development)
-    credentials: true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, mobile apps, Render health checks)
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app')        // allow all Vercel preview deployments
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS: origin '${origin}' not allowed`));
+  },
+  credentials: true,
 }));
 
 // Security Headers
